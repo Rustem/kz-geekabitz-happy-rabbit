@@ -31,14 +31,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'nested_admin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'happyrabbit.core.accounts.apps.AccountsConfig',
-    'nested_admin',
+    'happyrabbit.hr_user.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [

@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('last_name', models.CharField(max_length=200)),
                 ('language_code', models.CharField(max_length=2)),
                 ('username', models.CharField(max_length=200)),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.account')),
+                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='hr_user.account')),
             ],
         ),
         migrations.CreateModel(

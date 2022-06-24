@@ -9,17 +9,20 @@ from .models import Account, UserProfile, Child
 class ChildInline(nested_admin.nested.NestedStackedInline):
     model = Child
     extra = 1
+    exclude = ['child_id']
 
 
 class UserProfileInline(nested_admin.nested.NestedStackedInline):
     model = UserProfile
     extra = 1
+    exclude = ['user_profile_id']
 
 
 class AccountInline(nested_admin.nested.NestedStackedInline):
     model = Account
     extra = 1
     inlines = [UserProfileInline]
+    exclude = ['account_id']
 
 
 class CustomUserAdmin(nested_admin.nested.NestedModelAdmin, UserAdmin):
