@@ -31,6 +31,7 @@ MANIFEST
 
 # env
 happy-rabbit-venv
+.env
 
 # idea
 .idea/
