@@ -24,7 +24,7 @@ Design of the project is wrapped in [google-doc](https://docs.google.com/documen
 
 * Admin panel (thanks to [Django](https://docs.djangoproject.com/en/3.1/intro/tutorial01/))
 * Background jobs using [Dramatiq](https://dramatiq.io/motivation.html) and crontab scheduling with [Periodiq](https://pypi.org/project/periodiq/). 
-* [Production-ready](https://github.com/ohld/django-telegram-bot/wiki/Production-Deployment-using-Dokku) deployment using [Dokku](https://dokku.com)
+* [Production-ready](https://github.com/Rustem/kz-geekabitz-happy-rabbit/wiki/Production-Deployment-using-Dokku) deployment using [Dokku](https://dokku.com)
 * Telegram API usage in pooling or [webhook mode](https://core.telegram.org/bots/api#setwebhook)
 
 
@@ -69,7 +69,7 @@ python manage.py createsuperuser
 
 Run bot in pooling mode:
 ``` bash
-python happy-rabbit-bot.py --mode pooling 
+python manage-bot.py 
 ```
 
 If you want to open Django admin panel which will be located on http://localhost:8000/admin/:
