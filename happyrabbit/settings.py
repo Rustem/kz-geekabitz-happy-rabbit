@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 
     # local apps
     'tgbot.apps.TgbotConfig',
+    'activity.apps.ActivityConfig'
 ]
 
 MIDDLEWARE = [
