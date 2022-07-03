@@ -27,6 +27,13 @@ class AccountInline(nested_admin.nested.NestedStackedInline):
 
 class CustomUserAdmin(nested_admin.nested.NestedModelAdmin, UserAdmin):
     inlines = [AccountInline, ChildInline]
+    list_display = ['email', 'username', 'is_staff', 'is_active', 'get_children']
+
+    def get_children(self, obj):
+        children = obj.child_set.all()
+        return '\n'.join(map(str, children))
+
+    get_children.short_description = "Children"
 
 
 admin.site.unregister(User)

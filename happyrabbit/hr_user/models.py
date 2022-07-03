@@ -29,3 +29,6 @@ class Child(models.Model):
     def clean(self):
         if self.age > 18:
             raise ValidationError("Child must be younger than 18!")
+
+    def __str__(self):
+        return f'{self.name} - {self.age} years old'
