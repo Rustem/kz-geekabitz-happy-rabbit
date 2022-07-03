@@ -1,41 +1,38 @@
+import logging
+
 from telegram import Update
-
-from typing import Dict
-
 from telegram.ext import CallbackContext
 
+from happyrabbit.hr_user.abstract import ExternalAccount
 from . import static_text
 from .keyboards import make_keyboard_for_start_command
+from ...backends import TelegramUserBackend
+
+logger = logging.getLogger(__name__)
+
+telegram_user_backend = TelegramUserBackend()
 
 
-def extract_user_data_from_update(update: Update) -> Dict:
-    """ python-telegram-bot's Update instance --> User info """
-    if update.message is not None:
-        user = update.message.from_user.to_dict()
-    elif update.inline_query is not None:
-        user = update.inline_query.from_user.to_dict()
-    elif update.chosen_inline_result is not None:
-        user = update.chosen_inline_result.from_user.to_dict()
-    elif update.callback_query is not None and update.callback_query.from_user is not None:
-        user = update.callback_query.from_user.to_dict()
-    elif update.callback_query is not None and update.callback_query.message is not None:
-        user = update.callback_query.message.chat.to_dict()
-    else:
-        raise Exception(f"Can't extract user data from update: {update}")
+def account_display(account: ExternalAccount) -> str:
+    return f'{account.get_external_user_id()}:{account.get_username()}'
 
-    return dict(
-        user_id=user["id"],
-        is_blocked_bot=False,
-        **{
-            k: user[k]
-            for k in ["username", "first_name", "last_name", "language_code"]
-            if k in user and user[k] is not None
-        },
-    )
+
+def chat_display(chat):
+    return f'chat:{chat.id}'
+
 
 def command_start(update: Update, context: CallbackContext) -> None:
-    tg_user = extract_user_data_from_update(update)
+    external_account = telegram_user_backend.extract_external_profile(update)
+    external_profile = external_account.get_external_profile()
+    # TODO get or create an account
+    # TODO add new chat session
+    message = '/{cmdname} command was issued by {user} in {chat}'
+    logger.info(message.format(
+        cmdname='start',
+        user=account_display(external_account),
+        chat=chat_display(update.message.chat)))
     # transform to Account object
-    text = static_text.start_created.format(first_name=tg_user["first_name"])
+
+    text = static_text.start_created.format(first_name=external_profile.get_first_name())
     update.message.reply_text(text=text,
                               reply_markup=make_keyboard_for_start_command())
