@@ -26,6 +26,7 @@ class BaseBot(ABC):
 
     def __init__(self, telegram_token: str):
         self.bot = Bot(token=telegram_token)
+        self.telegram_token = telegram_token
         self.updater = Updater(bot=self.bot)
         self.dispatcher = self.updater.dispatcher
         self.message_sender = MessageSender(self.bot)
@@ -45,7 +46,7 @@ class BaseBot(ABC):
 
     def _wrap_cmd(self, handler) -> Callable[[Type[Bot], Type[Update], List[str]], None]:
 
-        def wrapper(bot: Bot, update: Update, args: List[str] = None):
+        def wrapper(update: Update, args: List[str] = None):
             context = ConversationContext(self.bot, update, args)
             context = self.wrap_context(context)
             handler(context)
@@ -78,9 +79,10 @@ class BaseBot(ABC):
 
         self.dispatcher.add_error_handler(self._error_handler)
         self.dispatcher.add_handler(
-            MessageHandler([Filters.text], self._msg_handler))
+            MessageHandler(Filters.text, self._msg_handler))
 
         self.updater.start_polling()
+        self.updater.idle()
 
     @abstractmethod
     def wrap_context(self, context: ConversationContext):

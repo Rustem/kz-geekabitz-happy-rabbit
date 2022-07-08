@@ -3,6 +3,8 @@ from typing import List
 from telegram import Update, Bot
 from telegram.message import Message
 
+from happyrabbit.hr_user.abstract import ExternalSession
+
 
 class ConversationContext:
     bot: Bot = None
@@ -11,7 +13,10 @@ class ConversationContext:
 
     args: List[str] = None
 
+    session: ExternalSession
+
     def __init__(self, bot: Bot, update: Update, args: List[str]=None):
+        self.session = None
         self.bot = bot
         self.update = update
         self.args = args or []
@@ -34,4 +39,7 @@ class ConversationContext:
             return self.message.message_id
         else:
             return None
+
+    def set_session(self, session: ExternalSession):
+        self.session = session
 
