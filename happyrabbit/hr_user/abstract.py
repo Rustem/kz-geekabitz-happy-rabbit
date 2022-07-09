@@ -40,6 +40,17 @@ class ExternalAccount:
         pass
 
 
+class AuthToken:
+
+    @abstractmethod
+    def get_key(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_created(self) -> datetime.datetime:
+        pass
+
+
 class ExternalSession:
 
     @abstractmethod
@@ -47,11 +58,15 @@ class ExternalSession:
         pass
 
     @abstractmethod
+    def get_auth_token(self) -> AuthToken:
+        pass
+
+    @abstractmethod
     def get_account(self) -> ExternalAccount:
         pass
 
     @abstractmethod
-    def get_date_logged_in(self) -> datetime.datetime:
+    def get_login_date(self) -> datetime.datetime:
         pass
 
     @abstractmethod

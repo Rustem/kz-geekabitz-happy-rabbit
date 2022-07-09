@@ -31,28 +31,27 @@ class HappyRabbitBot(BaseBot):
         bot_link = f"https://t.me/" + bot_info["username"]
         logging.info(f"Pooling of '{bot_link}' started")
 
-    def cmd_auth(self, context: ConversationContext):
-        log_command(context, "auth")
-
-        if context.session.get_username():
-            logger.debug("...Already authorized as %s.", context.session.get_username())
-            self.message_sender.send_message_for_context(context, messages.AUTH_ALREADY)
-            return
-
-        # TODO: Add groups authorization
-        # TODO authenticate
-
-    def cmd_unauth(self, context: ConversationContext):
-        raise NotImplementedError("Implement me")
+    def cmd_start(self, context: ConversationContext):
+        # TODO extract auth key
+        # if session is part of context and session is active then return appropriate message
+        # otherwise using auth key query session
+            # if session is found then authenticate user
+            # if session is not found then ask user to login with login url
+        pass
 
     def cmd_help(self, context: ConversationContext):
+        # TODO return List of available commands with descriptions
         raise NotImplementedError("Implement me")
 
     def cmd_status(self, context: ConversationContext):
+        # TODO return detailed authentication status
         raise NotImplementedError("Implement me")
 
     def wrap_context(self, context: ConversationContext):
         # TODO move to backend
+        # 1 search session by external_user_id
+        # 2 if session is found than include user session as part of converation context
+        # 3 if session is not found, then don't include session
         user = context.message.from_user
         account = Account(external_user_id=user.id)
         account.userprofile = UserProfile(username=user.username)
@@ -60,4 +59,7 @@ class HappyRabbitBot(BaseBot):
         # session, created = Session.objects.get_or_create(session_id=context.chat_id)
         context.set_session(session)
         return context
+
+    def command_not_found(self, context):
+        self.message_sender.send_message_for_context(context, messages.COMMAND_NOT_FOUND.format(command=context.text))
 
