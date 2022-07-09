@@ -16,6 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+import happyrabbit.hr_user.views
+
 urlpatterns = [
+    path('', happyrabbit.hr_user.views.MainPageView.as_view(), name='home'),
     path('admin/', admin.site.urls),
+    path('registration/', happyrabbit.hr_user.views.UserRegistrationView.as_view(), name='registration'),
+    path('login/', happyrabbit.hr_user.views.UserLoginView.as_view(), name='login'),
+    path('onboarding/', happyrabbit.hr_user.views.OnBoardingView.as_view(), name='onboarding')
 ]

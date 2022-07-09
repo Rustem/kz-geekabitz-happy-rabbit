@@ -52,11 +52,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'happyrabbit.hr_user.apps.AccountsConfig',
 
     # local apps
     'tgbot.apps.TgbotConfig',
-    'activity.apps.ActivityConfig'
+    'happyrabbit.hr_user.apps.AccountsConfig',
+    'happyrabbit.activity.apps.ActivityConfig'
 ]
 
 MIDDLEWARE = [
@@ -119,6 +119,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/

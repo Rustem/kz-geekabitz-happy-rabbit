@@ -1,0 +1,15 @@
+
+<form action="/onboarding/" method="post">
+    {% csrf_token %}
+    Account:
+    {{ account_form }}
+    <br>
+    UserProfile:
+    {{ user_profile_form }}
+    <br>
+    Child:
+    {{ child_form }}
+    {{ message }}
+    <br>
+    <input type="submit" value="Submit">
+</form>
