@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('registration/', happyrabbit.hr_user.views.UserRegistrationView.as_view(), name='registration'),
     path('login/', happyrabbit.hr_user.views.UserLoginView.as_view(), name='login'),
-    path('onboarding/', happyrabbit.hr_user.views.OnBoardingView.as_view(), name='onboarding')
+    path('onboarding/', happyrabbit.hr_user.views.OnBoardingView.as_view(), name='onboarding'),
+    path('profile/', happyrabbit.hr_user.views.ProfileView.as_view(), name='profile')
 ]

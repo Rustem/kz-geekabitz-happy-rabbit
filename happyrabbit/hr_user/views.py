@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -7,6 +8,8 @@ from django.views.generic import TemplateView
 
 from .forms import UserRegisterForm, UserLoginForm, AccountForm, ChildForm, UserProfileForm
 from django.views.generic.edit import CreateView, FormView
+
+from .models import Account, UserProfile, Child
 
 
 class MainPageView(TemplateView):
@@ -62,9 +65,34 @@ class OnBoardingView(View):
         if all([account_form.is_valid(), user_profile_form.is_valid(), child_form.is_valid()]):
             account_form.external_user_id = 123
             account_form.user = request.user
-            account = account_form.save()
-            print(account.account_id)
+            account = account_form.save(commit=True)
+
+            user_profile = user_profile_form.save(commit=False)
+            user_profile.account = account
+            user_profile.save(force_insert=True)
+
+            child = child_form.save(commit=False)
+            child.guardian_id = request.user
+            child.save()
+
+            return redirect('profile')
 
         message = "Invalid Data"
         return render(request, self.template_name, context={'account_form': account_form, 'child_form': child_form,
                                                             'user_profile_form': user_profile_form, 'message': message})
+
+
+class ProfileView(View):
+    template_name = 'users/profile.html'
+
+    def get(self, request):
+        accounts = Account.objects.filter(user=request.user).all()
+        user_profiles = UserProfile.objects.filter(account__in=accounts).all()
+        childs = Child.objects.filter(guardian_id=request.user).all()
+
+        context = {
+            'accounts': accounts,
+            'user_profiles': user_profiles,
+            'childs': childs
+        }
+        return render(request, self.template_name, context=context)
