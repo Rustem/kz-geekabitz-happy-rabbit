@@ -4,6 +4,8 @@ from typing import Dict, Type, Callable, List
 
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext.callbackcontext import CC
+from telegram.ext.utils.types import CCT
 
 from tgbot.core.context import ConversationContext
 from tgbot.core.decorators import command_handler
@@ -26,6 +28,7 @@ class BaseBot(ABC):
 
     def __init__(self, telegram_token: str):
         self.bot = Bot(token=telegram_token)
+        self.telegram_token = telegram_token
         self.updater = Updater(bot=self.bot)
         self.dispatcher = self.updater.dispatcher
         self.message_sender = MessageSender(self.bot)
@@ -40,20 +43,20 @@ class BaseBot(ABC):
         except KeyError:
             pass
 
-    def _error_handler(self, bot: Bot, update: Update, error):
-        raise error
+    def _error_handler(self, update: Update, error_context: CC):
+        raise error_context.error
 
     def _wrap_cmd(self, handler) -> Callable[[Type[Bot], Type[Update], List[str]], None]:
 
-        def wrapper(bot: Bot, update: Update, args: List[str] = None):
+        def wrapper(update: Update, args: List[str] = None):
             context = ConversationContext(self.bot, update, args)
             context = self.wrap_context(context)
             handler(context)
 
         return wrapper
 
-    def _msg_handler(self, bot: Bot, update: Update):
-        context = ConversationContext(bot, update)
+    def _msg_handler(self, update: Update, cct: CCT):
+        context = ConversationContext(self.bot, update)
         context = self.wrap_context(context)
 
         if context.chat_id in self.dialogs:
@@ -63,6 +66,10 @@ class BaseBot(ABC):
                 del self.dialogs[context.chat_id]
 
             return
+
+        if context.text is not None and context.text.startswith('/'):
+            # command with such name does not exist
+            self.command_not_found(context)
 
     def run(self):
         for key in dir(self):
@@ -78,10 +85,15 @@ class BaseBot(ABC):
 
         self.dispatcher.add_error_handler(self._error_handler)
         self.dispatcher.add_handler(
-            MessageHandler([Filters.text], self._msg_handler))
+            MessageHandler(Filters.text, self._msg_handler))
 
         self.updater.start_polling()
+        self.updater.idle()
 
     @abstractmethod
     def wrap_context(self, context: ConversationContext):
+        raise NotImplementedError("not implemented")
+
+    @abstractmethod
+    def command_not_found(self, context: ConversationContext):
         raise NotImplementedError("not implemented")

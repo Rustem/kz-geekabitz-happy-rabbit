@@ -1,9 +1,12 @@
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 
-from .abstract import ExternalUserProfile, ExternalAccount
+from .abstract import ExternalUserProfile, ExternalAccount, ExternalSession, AuthToken
 from .enums import EXTERNAL_SERVICE_CHOICES
+
+import datetime
+from django.utils import timezone
 
 
 class Account(ExternalAccount, models.Model):
@@ -62,3 +65,44 @@ class Child(models.Model):
 
     def __str__(self):
         return f'{self.name} - {self.age} years old'
+
+
+class AuthTokenModel(AuthToken, models.Model):
+
+    class Meta:
+        db_table = "hr_user_auth_token"
+
+    key = models.CharField(max_length=40, primary_key=True)
+    created = models.DateTimeField(default=timezone.now)
+
+    def get_key(self) -> str:
+        return self.keyem
+
+    def get_created(self) -> datetime.datetime:
+        return self.created
+
+
+class Session(ExternalSession, models.Model):
+
+    session_id = models.CharField(primary_key=True, max_length=40)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True)
+    date_logged_in = models.DateTimeField("date logged in", default=timezone.now)
+    auth_token = models.ForeignKey(AuthTokenModel, null=True, on_delete=models.SET_NULL)
+
+    def get_session_id(self) -> str:
+        return self.session_id
+
+    def get_account(self) -> ExternalAccount:
+        return self.account
+
+    def get_date_logged_in(self) -> datetime.datetime:
+        return self.date_logged_in
+
+    def get_username(self) -> str:
+        return self.account is not None and self.account.get_username()
+
+    def get_login_date(self) -> datetime.datetime:
+        return self.date_logged_in
+
+    def get_auth_token(self) -> AuthToken:
+        return self.auth_token

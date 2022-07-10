@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Callable, Tuple
+from typing import List, Callable, Tuple, Type
 
 from tgbot.core.context import ConversationContext
 from tgbot.core.message_sender import MessageSender
@@ -50,9 +50,6 @@ class Dialog(ABC):
             steps.append((num, step_func))
         return sorted(steps, key=lambda s: s[0])
 
-    def execute_current_step(self, context: ConversationContext):
-        self.execute_step(self.dialog_state.current_step, context)
-
     def advance_next(self, context: ConversationContext) -> bool:
         """
         Advances the dialog by executing step.
@@ -61,15 +58,18 @@ class Dialog(ABC):
         if self.dialog_state.is_completed():
             raise DialogStateError("Dialog.advance_next called after dialog is completed.")
 
-        self.dialog_state.advance_next()
+        if self.execute_step(self.dialog_state.current_step, context):
+            self.dialog_state.advance_next()
+
         if self.dialog_state.is_completed():
             return True
-        self.execute_current_step(context)
+
+        self.on_step_completed(self.dialog_state.current_step, context)
         return False
 
     @abstractmethod
-    def execute_step(self, step: Tuple[int, Callable], context: ConversationContext):
-        f""" Execute a dialog step with conversation context
+    def on_step_completed(self, step: Tuple[int, Callable], context: ConversationContext):
+        f"""A hook to send a signal back to originator about a just completed dialog step with conversation context
         @param {Tuple[int, Callable]} step to execute
         @param {ConversationContext} context a conversation context
         """
@@ -79,15 +79,24 @@ class Dialog(ABC):
     def cancel(self) -> bool:
         raise NotImplementedError("derived class can implement me")
 
+    @staticmethod
+    def execute_step(step: Tuple[int, Callable[[ConversationContext], bool]], context: ConversationContext) -> bool:
+        if step is None or len(step) != 2:
+            raise ValueError("expect step to be a non-nullable tuple[int, callable]")
+        # TODO log execution
+        step_num, step_func = step
+        return step_func(context)
+
 
 class MessageDialog(Dialog, ABC):
     message_sender: MessageSender
 
     def __init__(self, message_sender: MessageSender):
+        super().__init__()
         self.message_sender = message_sender
 
-    def execute_step(self, step: Tuple[int, Callable], context: ConversationContext):
+    def on_step_completed(self, step: Tuple[int, Callable], context: ConversationContext):
         step_fn = step[1]
         options = getattr(self, step_fn.__name__ + '_options', None)
         text = getattr(self, step_fn.__name__ + '_message', "...")
-        self.message_sender.send_message(context, text, options=options)
+        self.message_sender.send_message_for_context(context, text, options=options)
