@@ -1,6 +1,11 @@
+import binascii
+import os
+
+from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 
 from .abstract import ExternalUserProfile, ExternalAccount, ExternalSession, AuthToken
 from .enums import EXTERNAL_SERVICE_CHOICES
@@ -75,11 +80,23 @@ class AuthTokenModel(AuthToken, models.Model):
     key = models.CharField(max_length=40, primary_key=True)
     created = models.DateTimeField(default=timezone.now)
 
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+        return super(AuthToken, self).save(*args, **kwargs)
+    
     def get_key(self) -> str:
         return self.keyem
 
     def get_created(self) -> datetime.datetime:
         return self.created
+
+    def is_expired(self) -> bool:
+        return self.get_created() < now() - datetime.timedelta(hours=int(getattr(settings, 'HAPPY_RABBIT_AUTH_TOKEN_EXPIRATION_HOURS', '24')))
+
+    @staticmethod
+    def generate_key():
+        return binascii.hexlify(os.urandom(20)).decode()
 
 
 class Session(ExternalSession, models.Model):
@@ -106,3 +123,6 @@ class Session(ExternalSession, models.Model):
 
     def get_auth_token(self) -> AuthToken:
         return self.auth_token
+
+    def is_expired(self) -> bool:
+        return not self.auth_token or self.auth_token.is_expired()

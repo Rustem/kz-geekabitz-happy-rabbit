@@ -50,6 +50,10 @@ class AuthToken:
     def get_created(self) -> datetime.datetime:
         pass
 
+    @abstractmethod
+    def is_expired(self) -> bool:
+        pass
+
 
 class ExternalSession:
 
@@ -71,4 +75,8 @@ class ExternalSession:
 
     @abstractmethod
     def get_username(self) -> str:
+        pass
+
+    @abstractmethod
+    def is_expired(self) -> bool:
         pass
