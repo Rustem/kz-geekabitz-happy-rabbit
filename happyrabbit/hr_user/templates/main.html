@@ -2,26 +2,30 @@
 {% load static %}
 
 {% block content %}
-    <div class="row row-cols-1 row-cols-lg-2 row-cols-xl-2">
-        <div class="col mx-auto">
-            <div class="card mt-5">
-                <div class="card-body">
-                    <div class="border p-4 rounded">
-                        <div class="text-center">
-                            <img src="{% static 'images/hr_logo.png' %}" class="logo-icon" alt="logo icon">
-                            {{ request.user }}
-                        </div>
-                        <div class="d-grid">
-                            <a class="btn my-4 shadow-sm btn-white" href="{% url 'registration' %}">
+    <div class="d-flex align-items-center justify-content-center my-5">
+        <div class="container">
+            <div class="row row-cols-1 row-cols-lg-2 row-cols-xl-2">
+                <div class="col mx-auto">
+                    <div class="card mt-5">
+                        <div class="card-body">
+                            <div class="border p-4 rounded">
+                                <div class="text-center">
+                                    <img src="{% static 'images/hr_logo.png' %}" class="logo-icon" alt="logo icon">
+
+                                </div>
+                                <div class="d-grid">
+                                    <a class="btn my-4 shadow-sm btn-white" href="{% url 'registration' %}">
                                 <span class="d-flex justify-content-center align-items-center">
                                     <i class="bx bx-user-circle"></i><span>Sign Up</span>
                                 </span>
-                            </a>
-                            <a href="{% url 'login' %}" class="btn btn-dark">
-                                <i class="bx bx-log-in-circle"></i>Login
-                            </a>
-                        </div>
+                                    </a>
+                                    <a href="{% url 'login' %}" class="btn btn-dark">
+                                        <i class="bx bx-log-in-circle"></i>Login
+                                    </a>
+                                </div>
 
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
