@@ -17,6 +17,7 @@ from happyrabbit.hr_user.auth.service import AuthService
 
 TELEGRAM_USERNAME = settings.TELEGRAM_USERNAME
 
+
 class MainPageView(View):
     template_name = 'main.html'
 
@@ -124,7 +125,6 @@ class ProfileView(View):
             'childs': childs
         }
         return render(request, self.template_name, context=context)
-
 
 
 class AuthDeepLinkView(TemplateView):

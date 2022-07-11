@@ -21,10 +21,5 @@ import happyrabbit.hr_user.views
 urlpatterns = [
     path('', happyrabbit.hr_user.views.MainPageView.as_view(), name='home'),
     path('admin/', admin.site.urls),
-    path('registration/', happyrabbit.hr_user.views.UserRegistrationView.as_view(), name='registration'),
-    path('login/', happyrabbit.hr_user.views.UserLoginView.as_view(), name='login'),
-    path('logout/', happyrabbit.hr_user.views.UserLogoutView.as_view(), name='logout'),
-    path('onboarding/', happyrabbit.hr_user.views.OnBoardingView.as_view(), name='onboarding'),
-    path('profile/', happyrabbit.hr_user.views.ProfileView.as_view(), name='profile')
     path('user/', include('happyrabbit.hr_user.urls')),
 ]
