@@ -12,6 +12,7 @@ class AuthError(ValidationError):
 class AuthService:
 
     def get_auth_token(self, user: User, account_id: int) -> AuthToken:
+        print(account_id + "Acocunt")
         if not account_id:
             raise ValueError("account_id is required")
         account = self.get_account(account_id)
