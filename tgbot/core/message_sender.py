@@ -2,6 +2,8 @@ from typing import List
 
 from telegram import Bot
 
+from tgbot.core.context import ConversationContext
+
 
 class MessageSender:
     """
@@ -11,6 +13,9 @@ class MessageSender:
 
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    def send_message_for_context(self, context: ConversationContext, text, **kwargs):
+        self.send_message(context.chat_id, text, reply_to=context.reply_to, **kwargs)
 
     def send_message(self, chat_id: int, text: str, *,
                      options: List[List[str]] = None,
