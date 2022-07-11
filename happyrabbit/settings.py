@@ -18,6 +18,8 @@ from pathlib import Path
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from telegram import Bot
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -142,6 +144,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Authentication
+LOGIN_URL = '/user/auth/login/'
+
 # -----> TELEGRAM
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 if TELEGRAM_TOKEN is None:
@@ -150,3 +155,15 @@ if TELEGRAM_TOKEN is None:
         "Example of .env file: https://github.com/Rustem/kz-geekabitz-happy-rabbit/blob/main/.env_example"
     )
     sys.exit(1)
+
+
+def get_bot_username(TELEGRAM_TOKEN):
+    bot = Bot(token=TELEGRAM_TOKEN)
+    bot_info = bot.get_me()
+    return bot_info["username"]
+
+
+TELEGRAM_USERNAME = get_bot_username(TELEGRAM_TOKEN)
+
+# Happy Rabbit settings
+HAPPY_RABBIT_AUTH_TOKEN_EXPIRATION_HOURS = 1
