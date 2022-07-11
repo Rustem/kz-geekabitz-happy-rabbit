@@ -1,10 +1,23 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.forms import ModelForm
+from django.forms import ModelForm, BaseForm
 
 from happyrabbit.hr_user.enums import EXTERNAL_SERVICE_CHOICES, LANGUAGE_CODE_CHOICES
 from happyrabbit.hr_user.models import UserProfile, Account, Child
+
+
+class ReadOnlyForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_readonly()
+
+    def set_readonly(self):
+        for field in self.fields:
+            self.fields[field].required = False
+            self.fields[field].widget.attrs['disabled'] = 'disabled'
+            self.fields[field].required = False
 
 
 class UserRegisterForm(UserCreationForm):
@@ -19,7 +32,7 @@ class UserLoginForm(AuthenticationForm):
     pass
 
 
-class UserProfileForm(ModelForm):
+class UserProfileForm(ReadOnlyForm):
     language_code = forms.ChoiceField(widget=forms.Select(
         attrs={
             'class': 'form-select',
@@ -32,17 +45,17 @@ class UserProfileForm(ModelForm):
         fields = ('first_name', 'last_name', 'language_code', 'username',)
 
 
-class AccountForm(ModelForm):
-    external_service = forms.ChoiceField(widget=forms.Select(
-        attrs={
-            'class': 'form-select',
-        },
-    ),
-        choices=EXTERNAL_SERVICE_CHOICES)
+class AccountForm(ReadOnlyForm):
+    external_service = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-select',},),
+                                         choices=EXTERNAL_SERVICE_CHOICES)
 
     class Meta:
         model = Account
         fields = ('external_service',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_readonly()
 
 
 class ChildForm(ModelForm):

@@ -41,7 +41,7 @@ class UserProfile(models.Model, ExternalUserProfile):
     first_name = models.CharField(max_length=200, blank=True)
     last_name = models.CharField(max_length=200, blank=True)
     language_code = models.CharField(max_length=2, blank=True)
-    username = models.CharField(max_length=200, null=False)
+    username = models.CharField(max_length=200, blank=True, null=False)
     account = models.OneToOneField(Account, on_delete=models.CASCADE)
 
     def get_first_name(self) -> str:
