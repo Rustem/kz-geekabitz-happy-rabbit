@@ -11,6 +11,6 @@ urlpatterns = [
     path('registration/', happyrabbit.hr_user.views.UserRegistrationView.as_view(), name='registration'),
     path('login/', happyrabbit.hr_user.views.UserLoginView.as_view(), name='login'),
     path('logout/', happyrabbit.hr_user.views.UserLogoutView.as_view(), name='logout'),
-    path('onboarding/', happyrabbit.hr_user.views.OnBoardingView.as_view(), name='onboarding'),
-    path('profile/', happyrabbit.hr_user.views.ProfileView.as_view(), name='profile'),
+    path('onboarding/', happyrabbit.hr_user.views.UserOnBoardingView.as_view(), name='onboarding'),
+    path('profile/', happyrabbit.hr_user.views.UserProfileView.as_view(), name='profile'),
 ]

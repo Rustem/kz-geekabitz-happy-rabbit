@@ -1,9 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db import transaction
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
 from .forms import UserRegisterForm, UserLoginForm, AccountForm, ChildForm, UserProfileForm
@@ -73,7 +73,7 @@ class UserLogoutView(View):
         return redirect('home')
 
 
-class OnBoardingView(View):
+class UserOnBoardingView(View):
     template_name = 'users/onboarding.html'
 
     def get(self, request):
@@ -109,7 +109,7 @@ class OnBoardingView(View):
                                                             'user_profile_form': user_profile_form, 'message': message})
 
 
-class ProfileView(View):
+class UserProfileView(LoginRequiredMixin, View):
     template_name = 'users/profile.html'
 
     def get(self, request):
@@ -127,7 +127,7 @@ class ProfileView(View):
         return render(request, self.template_name, context=context)
 
 
-class AuthDeepLinkView(TemplateView):
+class AuthDeepLinkView(LoginRequiredMixin, TemplateView):
     template_name = 'hr_user/deep_link.html'
 
     auth_service: AuthService
@@ -142,6 +142,6 @@ class AuthDeepLinkView(TemplateView):
         return kwargs
 
     def _generate_deeplink(self, account_id: int) -> str:
-        auth_token = self.auth_service.get_auth_token(self.request.user, account_id)
+        auth_token = self.auth_service.get_auth_token(account_id)
         return f'http://t.me/{TELEGRAM_USERNAME}?start={auth_token.get_key()}'
 
