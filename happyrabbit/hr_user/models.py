@@ -16,9 +16,9 @@ from django.utils import timezone
 
 class Account(ExternalAccount, models.Model):
 
-    account_id = models.IntegerField(primary_key=True)
+    account_id = models.BigAutoField(primary_key=True)
     external_service = models.CharField(max_length=200, choices=EXTERNAL_SERVICE_CHOICES)
-    external_user_id = models.IntegerField()
+    external_user_id = models.IntegerField(blank=True, default=0)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def get_username(self):
@@ -37,7 +37,7 @@ class Account(ExternalAccount, models.Model):
 
 class UserProfile(models.Model, ExternalUserProfile):
 
-    user_profile_id = models.IntegerField(primary_key=True)
+    user_profile_id = models.BigAutoField(primary_key=True)
     first_name = models.CharField(max_length=200, blank=True)
     last_name = models.CharField(max_length=200, blank=True)
     language_code = models.CharField(max_length=2, blank=True)
@@ -58,7 +58,7 @@ class UserProfile(models.Model, ExternalUserProfile):
 
 
 class Child(models.Model):
-    child_id = models.IntegerField(primary_key=True)
+    child_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=200)
     age = models.IntegerField()
     carrots = models.IntegerField(default=0)
