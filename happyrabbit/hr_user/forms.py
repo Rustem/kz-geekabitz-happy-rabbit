@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.forms import ModelForm, BaseForm
+from django.forms import ModelForm
 
 from happyrabbit.hr_user.enums import EXTERNAL_SERVICE_CHOICES, LANGUAGE_CODE_CHOICES
 from happyrabbit.hr_user.models import UserProfile, Account, Child
@@ -45,7 +45,7 @@ class UserProfileForm(ReadOnlyForm):
         fields = ('first_name', 'last_name', 'language_code', 'username',)
 
 
-class AccountForm(ReadOnlyForm):
+class AccountUpdateForm(ReadOnlyForm):
     external_service = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-select',},),
                                          choices=EXTERNAL_SERVICE_CHOICES)
 
@@ -53,16 +53,8 @@ class AccountForm(ReadOnlyForm):
         model = Account
         fields = ('external_service',)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.set_readonly()
 
-
-class ChildForm(ModelForm):
+class ChildUpdateForm(ModelForm):
     class Meta:
         model = Child
         fields = ('name', 'age',)
-
-
-class OnBoardingForm(ModelForm):
-    pass

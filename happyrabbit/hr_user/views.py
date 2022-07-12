@@ -6,8 +6,8 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
-from .forms import UserRegisterForm, UserLoginForm, AccountForm, ChildForm, UserProfileForm
-from django.views.generic.edit import CreateView, FormView
+from .forms import UserRegisterForm, UserLoginForm, UserProfileForm, AccountUpdateForm, ChildUpdateForm
+from django.views.generic.edit import CreateView
 
 from .models import Account, UserProfile, Child
 
@@ -78,17 +78,17 @@ class UserOnBoardingView(View):
 
     def get(self, request):
 
-        account_form = AccountForm()
+        account_form = AccountUpdateForm()
         user_profile_form = UserProfileForm()
-        child_form = ChildForm()
+        child_form = ChildUpdateForm()
         message = ''
         return render(request, self.template_name, context={'account_form': account_form, 'child_form': child_form,
                                                             'user_profile_form': user_profile_form, 'message': message})
 
     def post(self, request):
-        account_form = AccountForm(request.POST)
+        account_form = AccountUpdateForm(request.POST)
         user_profile_form = UserProfileForm(request.POST)
-        child_form = ChildForm(request.POST)
+        child_form = ChildUpdateForm(request.POST)
         if all([account_form.is_valid(), user_profile_form.is_valid(), child_form.is_valid()]):
             account = account_form.save(commit=False)
             account.user = request.user
