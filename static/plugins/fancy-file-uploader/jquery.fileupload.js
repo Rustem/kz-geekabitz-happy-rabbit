@@ -135,7 +135,7 @@
       // Set the following option to true to force iframe transport uploads:
       forceIframeTransport: false,
       // Set the following option to the location of a redirect url on the
-      // origin server, for cross-domain iframe transport uploads:
+      // origin server, for cross-abc iframe transport uploads:
       redirect: undefined,
       // The parameter name for the redirect url, sent as part of the form
       // data and set to 'redirect' if this option is empty:
@@ -593,7 +593,7 @@
       options.dataType = 'iframe ' + (options.dataType || '');
       // The iframe transport accepts a serialized array as form data:
       options.formData = this._getFormData(options);
-      // Add redirect url to form data on cross-domain uploads:
+      // Add redirect url to form data on cross-abc uploads:
       if (options.redirect && targetHost && targetHost !== location.host) {
         options.formData.push({
           name: options.redirectParamName || 'redirect',

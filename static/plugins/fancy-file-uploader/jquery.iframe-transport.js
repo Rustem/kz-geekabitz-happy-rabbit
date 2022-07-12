@@ -89,12 +89,12 @@
             iframe.off('load').on('load', function () {
               var response;
               // Wrap in a try/catch block to catch exceptions thrown
-              // when trying to access cross-domain iframe contents:
+              // when trying to access cross-abc iframe contents:
               try {
                 response = iframe.contents();
                 // Google Chrome and Firefox do not throw an
                 // exception when calling iframe.contents() on
-                // cross-domain requests, so we unify the response:
+                // cross-abc requests, so we unify the response:
                 if (!response.length || !response[0].firstChild) {
                   throw new Error();
                 }

@@ -1,5 +1,17 @@
 import datetime
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod
+
+
+TELEGRAM = 'TELEGRAM'
+EXTERNAL_SERVICE_CHOICES = [
+    (TELEGRAM, 'Telegram')
+]
+
+LANGUAGE_CODE_CHOICES = [
+    ('RU', 'Русский'),
+    ('EN', 'English'),
+    ('KZ', 'Казахский')
+]
 
 
 class ExternalUserProfile:

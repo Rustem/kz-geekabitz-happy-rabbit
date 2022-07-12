@@ -1,6 +1,6 @@
 import logging
 
-from happyrabbit.hr_user.abstract import ExternalAccount
+from happyrabbit.abc.external_account import ExternalAccount
 from happyrabbit.hr_user.models import Session, Account, UserProfile
 from tgbot.core import messages
 from tgbot.core.base_bot import BaseBot
@@ -33,6 +33,8 @@ class HappyRabbitBot(BaseBot):
 
     def cmd_start(self, context: ConversationContext):
         # TODO extract auth key
+        if not context.text:
+            pass
         # if session is part of context and session is active then return appropriate message
         # otherwise using auth key query session
             # if session is found then authenticate user

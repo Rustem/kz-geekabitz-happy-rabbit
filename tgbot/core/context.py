@@ -3,7 +3,7 @@ from typing import List
 from telegram import Update, Bot
 from telegram.message import Message
 
-from happyrabbit.hr_user.abstract import ExternalSession
+from happyrabbit.abc.external_account import ExternalSession
 
 
 class ConversationContext:

@@ -2,9 +2,8 @@
 
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 import django.utils.timezone
-import happyrabbit.hr_user.abstract
+import happyrabbit.abc.external_account as external_account
 
 
 class Migration(migrations.Migration):
@@ -24,7 +23,7 @@ class Migration(migrations.Migration):
                 ('external_user_id', models.IntegerField(blank=True, default=0)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
-            bases=(happyrabbit.hr_user.abstract.ExternalAccount, models.Model),
+            bases=(external_account.ExternalAccount, models.Model),
         ),
         migrations.CreateModel(
             name='AuthTokenModel',
@@ -35,7 +34,7 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'hr_user_auth_token',
             },
-            bases=(happyrabbit.hr_user.abstract.AuthToken, models.Model),
+            bases=(external_account.AuthToken, models.Model),
         ),
         migrations.CreateModel(
             name='UserProfile',
@@ -47,7 +46,7 @@ class Migration(migrations.Migration):
                 ('username', models.CharField(max_length=200)),
                 ('account', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='hr_user.account')),
             ],
-            bases=(models.Model, happyrabbit.hr_user.abstract.ExternalUserProfile),
+            bases=(models.Model, external_account.ExternalUserProfile),
         ),
         migrations.CreateModel(
             name='Session',
@@ -57,7 +56,7 @@ class Migration(migrations.Migration):
                 ('account', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='hr_user.account')),
                 ('auth_token', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='hr_user.authtokenmodel')),
             ],
-            bases=(happyrabbit.hr_user.abstract.ExternalSession, models.Model),
+            bases=(external_account.ExternalSession, models.Model),
         ),
         migrations.CreateModel(
             name='Child',

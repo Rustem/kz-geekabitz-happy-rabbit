@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.forms import ModelForm
 
-from happyrabbit.hr_user.enums import EXTERNAL_SERVICE_CHOICES, LANGUAGE_CODE_CHOICES
+from happyrabbit.abc.external_account import EXTERNAL_SERVICE_CHOICES, LANGUAGE_CODE_CHOICES
 from happyrabbit.hr_user.models import UserProfile, Account, Child
 
 

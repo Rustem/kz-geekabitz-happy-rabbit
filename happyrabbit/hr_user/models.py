@@ -7,8 +7,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 
-from .abstract import ExternalUserProfile, ExternalAccount, ExternalSession, AuthToken
-from .enums import EXTERNAL_SERVICE_CHOICES
+from happyrabbit.abc.external_account import ExternalUserProfile, ExternalAccount, ExternalSession, AuthToken
+from happyrabbit.abc.external_account import EXTERNAL_SERVICE_CHOICES
 
 import datetime
 from django.utils import timezone
