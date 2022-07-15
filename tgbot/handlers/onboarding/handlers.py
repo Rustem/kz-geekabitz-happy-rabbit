@@ -3,7 +3,7 @@ import logging
 from telegram import Update
 from telegram.ext import CallbackContext
 
-from happyrabbit.hr_user.abstract import ExternalAccount
+from happyrabbit.abc.external_account import ExternalAccount
 from . import static_text
 from .keyboards import make_keyboard_for_start_command
 from ...backends import TelegramUserBackend

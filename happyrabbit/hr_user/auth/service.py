@@ -1,20 +1,18 @@
-from django.core.exceptions import ValidationError
+from django.urls import reverse
 
-from happyrabbit.hr_user.abstract import AuthToken
+from happyrabbit.abc.external_account import AuthToken, ExternalAccount
+from happyrabbit.abc.service.auth import BaseAuthService, AccountDoesNotExist
 from happyrabbit.hr_user.models import Session, AuthTokenModel, Account
-from django.contrib.auth.models import User
+
+ACCOUNT_DOES_NOT_EXIST = "Account [%s] does not exist"
 
 
-class AuthError(ValidationError):
-    pass
+class AuthService(BaseAuthService):
 
-
-class AuthService:
-
-    def get_auth_token(self, user: User, account_id: int) -> AuthToken:
+    def get_auth_token(self, account_id: int) -> AuthToken:
         print(account_id + "Acocunt")
         if not account_id:
-            raise ValueError("account_id is required")
+            raise ValueError(ACCOUNT_DOES_NOT_EXIST % account_id)
         account = self.get_account(account_id)
 
         session, created = Session.objects.get_or_create(account=account)
@@ -23,8 +21,13 @@ class AuthService:
                 session.auth_token.delete()
         return AuthTokenModel.objects.create(session=session)
 
-    def get_account(self, account_id: int) -> Account:
+    def get_account(self, account_id: int) -> ExternalAccount:
         try:
             return Account.objects.get(pk=account_id)
         except Account.DoesNotExist as e:
-            raise AuthError("account not found", e)
+            raise AccountDoesNotExist("account not found", e)
+
+    def get_deeplink_url(self, account_id: int) -> str:
+        if not self.has_account(account_id):
+            raise AccountDoesNotExist(ACCOUNT_DOES_NOT_EXIST % account_id)
+        return reverse('auth-deeplink', kwargs={"account_id": account_id})

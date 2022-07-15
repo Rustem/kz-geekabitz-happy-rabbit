@@ -3,8 +3,8 @@ from typing import Dict
 
 from telegram import Update
 
-from happyrabbit.hr_user.abstract import ExternalAccount
-from happyrabbit.hr_user.enums import TELEGRAM
+from happyrabbit.abc.external_account import ExternalAccount
+from happyrabbit.abc.external_account import TELEGRAM
 from happyrabbit.hr_user.models import Account, UserProfile
 
 
