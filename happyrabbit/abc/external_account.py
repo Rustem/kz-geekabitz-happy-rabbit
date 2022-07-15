@@ -51,6 +51,22 @@ class ExternalAccount:
     def get_username(self) -> str:
         pass
 
+    @abstractmethod
+    def get_linked_user(self):
+        pass
+
+    @abstractmethod
+    def is_linked_to_user(self, target_user) -> bool:
+        """
+        Checks if this account is linked to a `target_user`
+        @returns {bool}
+        """
+        pass
+
+    @abstractmethod
+    def is_saved(self) -> bool:
+        pass
+
 
 class AuthToken:
 
@@ -91,4 +107,8 @@ class ExternalSession:
 
     @abstractmethod
     def is_expired(self) -> bool:
+        pass
+
+    @abstractmethod
+    def is_authenticated(self) -> bool:
         pass

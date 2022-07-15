@@ -19,7 +19,7 @@ class Account(ExternalAccount, models.Model):
     account_id = models.BigAutoField(primary_key=True)
     external_service = models.CharField(max_length=200, choices=EXTERNAL_SERVICE_CHOICES)
     external_user_id = models.IntegerField(blank=True, default=0)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def get_username(self):
         return self.userprofile.username
@@ -33,6 +33,17 @@ class Account(ExternalAccount, models.Model):
     def get_external_profile(self) -> ExternalUserProfile:
         # TODO handle DOESNOTEXIST
         return self.userprofile
+
+    def get_linked_user(self):
+        return self.user
+
+    def is_saved(self) -> bool:
+        return not self._state.adding
+
+    def is_linked_to_user(self, target_user) -> bool:
+        if target_user is None:
+            raise ValueError("target_user is null")
+        return self.get_linked_user() and self.get_linked_user() == target_user
 
 
 class UserProfile(models.Model, ExternalUserProfile):
@@ -62,7 +73,7 @@ class Child(models.Model):
     name = models.CharField(max_length=200)
     age = models.IntegerField()
     carrots = models.IntegerField(default=0)
-    guardian_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    guardian = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def clean(self):
         if self.age > 18:
@@ -86,7 +97,7 @@ class AuthTokenModel(AuthToken, models.Model):
         return super(AuthToken, self).save(*args, **kwargs)
     
     def get_key(self) -> str:
-        return self.keyem
+        return self.key
 
     def get_created(self) -> datetime.datetime:
         return self.created
@@ -126,3 +137,6 @@ class Session(ExternalSession, models.Model):
 
     def is_expired(self) -> bool:
         return not self.auth_token or self.auth_token.is_expired()
+
+    def is_authenticated(self) -> bool:
+        return not self.is_expired()

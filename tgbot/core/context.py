@@ -3,7 +3,7 @@ from typing import List
 from telegram import Update, Bot
 from telegram.message import Message
 
-from happyrabbit.abc.external_account import ExternalSession
+from happyrabbit.abc.external_account import ExternalSession, ExternalAccount
 
 
 class ConversationContext:
@@ -39,6 +39,10 @@ class ConversationContext:
             return self.message.message_id
         else:
             return None
+
+    def external_user(self) -> ExternalAccount:
+        # TODO this should be either injected on creation or converted using a provider
+        raise NotImplementedError("error")
 
     def set_session(self, session: ExternalSession):
         self.session = session

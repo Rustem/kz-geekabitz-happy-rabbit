@@ -13,7 +13,7 @@ from .models import Account, UserProfile, Child
 
 from django.conf import settings
 
-from happyrabbit.hr_user.auth.service import AuthService
+from tgbot.service.auth import AuthService
 
 TELEGRAM_USERNAME = settings.TELEGRAM_USERNAME
 
@@ -99,7 +99,7 @@ class UserOnBoardingView(View):
             user_profile.save(force_insert=True)
 
             child = child_form.save(commit=False)
-            child.guardian_id = request.user
+            child.guardian = request.user
             child.save()
 
             return redirect('profile')
@@ -138,10 +138,11 @@ class AuthDeepLinkView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data(**kwargs)
-        kwargs['bot_deeplink'] = self._generate_deeplink(kwargs['account_id'])
+        kwargs['bot_deeplink'] = self._generate_deeplink(self.request.user, kwargs['account_id'])
         return kwargs
 
-    def _generate_deeplink(self, account_id: int) -> str:
-        auth_token = self.auth_service.get_auth_token(account_id)
+    def _generate_deeplink(self, user, account_id: int) -> str:
+        account = self.auth_service.link_user_to_account(user, account_id)
+        auth_token = self.auth_service.get_auth_token(user, account_id)
         return f'http://t.me/{TELEGRAM_USERNAME}?start={auth_token.get_key()}'
 

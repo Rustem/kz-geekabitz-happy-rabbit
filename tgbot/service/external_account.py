@@ -1,23 +1,16 @@
-from abc import ABC, abstractmethod
 from typing import Dict
 
 from telegram import Update
 
-from happyrabbit.abc.external_account import ExternalAccount
-from happyrabbit.abc.external_account import TELEGRAM
+from happyrabbit.abc.errors import IllegalStateError
+from happyrabbit.abc.external_account import ExternalAccount, TELEGRAM
+from happyrabbit.abc.service.external_account import ExternalUserService
 from happyrabbit.hr_user.models import Account, UserProfile
 
 
-class ExternalUserBackend(ABC):
+class TelegramUserService(ExternalUserService):
 
-    @abstractmethod
-    def extract_external_profile(self, external_data) -> ExternalAccount:
-        pass
-
-
-class TelegramUserBackend(ExternalUserBackend):
-
-    def extract_external_profile(self, external_data: Update) -> ExternalAccount:
+    def extract_external_account(self, external_data: Update) -> ExternalAccount:
         """ python-telegram-bot's Update instance --> User info """
         user = self._extract_user_data(external_data)
         if user is None:
@@ -25,6 +18,7 @@ class TelegramUserBackend(ExternalUserBackend):
         # TODO if user is bot then throw error
         external_account = Account(external_service=TELEGRAM, external_user_id=user['id'])
         external_account.userprofile = UserProfile(
+            account=external_account,
             username=user['username'],
             first_name=user['first_name'],
             last_name=user.get('last_name', None),
@@ -43,4 +37,4 @@ class TelegramUserBackend(ExternalUserBackend):
             return external_data.callback_query.from_user.to_dict()
         elif external_data.callback_query is not None and external_data.callback_query.message is not None:
             return external_data.callback_query.message.chat.to_dict()
-        return None
+        raise IllegalStateError("Unable to extract user data from external payload")

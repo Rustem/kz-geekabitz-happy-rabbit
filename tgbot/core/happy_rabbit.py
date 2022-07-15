@@ -2,6 +2,7 @@ import logging
 
 from happyrabbit.abc.external_account import ExternalAccount
 from happyrabbit.hr_user.models import Session, Account, UserProfile
+from tgbot.application import HappyRabbitApplication
 from tgbot.core import messages
 from tgbot.core.base_bot import BaseBot
 from tgbot.core.context import ConversationContext
@@ -23,8 +24,11 @@ def log_command(context: ConversationContext, cmd_name: str):
 
 class HappyRabbitBot(BaseBot):
 
-    def __init__(self, telegram_token: str):
+    happy_rabbit_app: HappyRabbitApplication
+
+    def __init__(self, happy_rabbit_app: HappyRabbitApplication, telegram_token: str):
         super().__init__(telegram_token)
+        self.happy_rabbit_app = happy_rabbit_app
         logger.debug("Create new instance of TrelloBot.")
 
         bot_info = self.bot.get_me()
@@ -33,8 +37,42 @@ class HappyRabbitBot(BaseBot):
 
     def cmd_start(self, context: ConversationContext):
         # TODO extract auth key
-        if not context.text:
-            pass
+        print("hi", context.args)
+
+        if not context.args:
+            # /start <-> command without args
+            # 1. check if account has an active session
+            session = self.happy_rabbit_app.get_active_session(context.update)
+            if session.is_authenticated():
+                # 2. if session is already authenticated
+                self.message_sender.send_message_for_context(context, messages.WELCOME_USER.format(
+                    username=session.get_username()))
+                return
+            if session.is_expired():
+                # 3. if session is not authenticated
+                assert session.get_account() is not None
+                # todo include message
+                login_url = self.happy_rabbit_app.get_signin_url(session.get_account().get_external_user_id())
+                self.message_sender.send_message_for_context(context, messages.LOGIN_REQUIRED.format(login_url=login_url))
+                return
+        else:
+            # /start {session_key}
+            # TODO verify account exist, if not then render unauthorized ?
+            auth_key = context.args[0]
+            session = self.happy_rabbit_app.get_active_session_by_auth_key(auth_key)
+            if session is None:
+                self.message_sender.send_message_for_context(context,
+                                                             messages.INVALID_AUTH_KEY.format(login_url=session.get_username()))
+                return
+            if session.is_expired():
+                login_url = self.happy_rabbit_app.get_signin_url(session.get_account().get_external_user_id())
+                self.message_sender.send_message_for_context(context, messages.WELCOME_NOT_AUTHENTICATED_USER.format(
+                    username=session.get_username(), login_url=login_url))
+                return
+            self.message_sender.send_message_for_context(context,
+                                                         messages.WELCOME_AUTHENTICATED_USER.format(username=session.get_username()))
+
+
         # if session is part of context and session is active then return appropriate message
         # otherwise using auth key query session
             # if session is found then authenticate user
