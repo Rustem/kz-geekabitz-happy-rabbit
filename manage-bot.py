@@ -8,7 +8,9 @@ django.setup()
 
 from tgbot.service.external_account import TelegramUserService
 from tgbot.service.auth import AuthService
+from tgbot.service.family import FamilyService
 from tgbot.application import HappyRabbitApplication
+
 
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
 logging.basicConfig(stream=sys.stdout,
@@ -31,7 +33,8 @@ if settings.TELEGRAM_TOKEN is None:
 def initialize_application():
     auth_service = AuthService()
     external_user_service = TelegramUserService()
-    return HappyRabbitApplication(auth_service, external_user_service)
+    family_service = FamilyService()
+    return HappyRabbitApplication(auth_service, external_user_service, family_service)
 
 
 if __name__ == "__main__":

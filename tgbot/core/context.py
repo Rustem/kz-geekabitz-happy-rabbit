@@ -4,6 +4,7 @@ from telegram import Update, Bot
 from telegram.message import Message
 
 from happyrabbit.abc.external_account import ExternalSession, ExternalAccount
+from tgbot.service.external_account import TelegramUserService
 
 
 class ConversationContext:
@@ -40,9 +41,11 @@ class ConversationContext:
         else:
             return None
 
-    def external_user(self) -> ExternalAccount:
+    @property
+    def external_user_id(self) -> int:
         # TODO this should be either injected on creation or converted using a provider
-        raise NotImplementedError("error")
+        user_data = TelegramUserService.extract_user_data(self.update)
+        return user_data['id']
 
     def set_session(self, session: ExternalSession):
         self.session = session

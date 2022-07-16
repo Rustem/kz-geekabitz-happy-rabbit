@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 from .forms import UserRegisterForm, UserLoginForm, UserProfileForm, AccountUpdateForm, ChildUpdateForm
 from django.views.generic.edit import CreateView
 
-from .models import Account, UserProfile, Child
+from .models import Account, UserProfile, ChildModel
 
 from django.conf import settings
 
@@ -117,7 +117,7 @@ class UserProfileView(LoginRequiredMixin, View):
             return redirect('home')
         accounts = Account.objects.filter(user=request.user).all()
         user_profiles = UserProfile.objects.filter(account__in=accounts).all()
-        childs = Child.objects.filter(guardian_id=request.user).all()
+        childs = ChildModel.objects.filter(guardian_id=request.user).all()
 
         context = {
             'accounts': accounts,

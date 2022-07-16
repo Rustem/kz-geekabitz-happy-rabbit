@@ -12,7 +12,7 @@ class TelegramUserService(ExternalUserService):
 
     def extract_external_account(self, external_data: Update) -> ExternalAccount:
         """ python-telegram-bot's Update instance --> User info """
-        user = self._extract_user_data(external_data)
+        user = self.extract_user_data(external_data)
         if user is None:
             raise Exception(f"Can't extract user data from update: {external_data}")
         # TODO if user is bot then throw error
@@ -26,7 +26,7 @@ class TelegramUserService(ExternalUserService):
         return external_account
 
     @staticmethod
-    def _extract_user_data(external_data: Update) -> Dict:
+    def extract_user_data(external_data: Update) -> Dict:
         if external_data.message is not None:
             return external_data.message.from_user.to_dict()
         elif external_data.inline_query is not None:

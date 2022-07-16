@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib.sites.models import Site
 
-from happyrabbit.abc.errors import IllegalStateError
+from happyrabbit.abc.errors import IllegalStateError, IllegalArgumentError
 from happyrabbit.abc.external_account import AuthToken, ExternalAccount, ExternalSession, TELEGRAM, ExternalUserProfile
 from happyrabbit.abc.service.auth import BaseAuthService, AccountDoesNotExist
 from happyrabbit.hr_user.models import Session, AuthTokenModel, Account, UserProfile
@@ -15,7 +15,7 @@ class AuthService(BaseAuthService):
 
     def create_account(self, account: ExternalAccount, profile: ExternalUserProfile):
         if not account:
-            raise ValueError("account is null")
+            raise IllegalArgumentError("account is null")
         if account.is_saved():
             raise IllegalStateError("Account is already created")
         created_account = Account.objects.create(
@@ -60,7 +60,7 @@ class AuthService(BaseAuthService):
 
     def get_auth_token(self, user: User, account_id: int) -> AuthToken:
         if not account_id:
-            raise ValueError(ACCOUNT_DOES_NOT_EXIST % account_id)
+            raise IllegalArgumentError(ACCOUNT_DOES_NOT_EXIST % account_id)
         account = self.get_account(account_id)
 
         if not account.is_linked_to_user(user):
