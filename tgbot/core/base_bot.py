@@ -4,7 +4,7 @@ from typing import Dict, Type, Callable, List
 
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from telegram.ext.callbackcontext import CC
+from telegram.ext.callbackcontext import CC, CallbackContext
 from telegram.ext.utils.types import CCT
 
 from tgbot.core.context import ConversationContext
@@ -46,10 +46,10 @@ class BaseBot(ABC):
     def _error_handler(self, update: Update, error_context: CC):
         raise error_context.error
 
-    def _wrap_cmd(self, handler) -> Callable[[Type[Bot], Type[Update], List[str]], None]:
+    def _wrap_cmd(self, handler) -> Callable[[Type[Bot], Type[Update], Type[CallbackContext]], None]:
 
-        def wrapper(update: Update, args: List[str] = None):
-            context = ConversationContext(self.bot, update, args)
+        def wrapper(update: Update, callback_context: CallbackContext):
+            context = ConversationContext(self.bot, update, callback_context.args)
             context = self.wrap_context(context)
             handler(context)
 

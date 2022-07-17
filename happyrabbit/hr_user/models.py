@@ -1,5 +1,6 @@
 import binascii
 import os
+from typing import List
 
 from django.conf import settings
 from django.db import models
@@ -7,19 +8,21 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 
+from happyrabbit.abc.errors import IllegalArgumentError
 from happyrabbit.abc.external_account import ExternalUserProfile, ExternalAccount, ExternalSession, AuthToken
 from happyrabbit.abc.external_account import EXTERNAL_SERVICE_CHOICES
 
 import datetime
 from django.utils import timezone
 
+from happyrabbit.abc.family import Child, BaseChildren
+
 
 class Account(ExternalAccount, models.Model):
-
     account_id = models.BigAutoField(primary_key=True)
     external_service = models.CharField(max_length=200, choices=EXTERNAL_SERVICE_CHOICES)
     external_user_id = models.IntegerField(blank=True, default=0)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def get_username(self):
         return self.userprofile.username
@@ -34,9 +37,19 @@ class Account(ExternalAccount, models.Model):
         # TODO handle DOESNOTEXIST
         return self.userprofile
 
+    def get_linked_user(self):
+        return self.user
+
+    def is_saved(self) -> bool:
+        return not self._state.adding
+
+    def is_linked_to_user(self, target_user) -> bool:
+        if target_user is None:
+            raise IllegalArgumentError("target_user is null")
+        return self.get_linked_user() and self.get_linked_user() == target_user
+
 
 class UserProfile(models.Model, ExternalUserProfile):
-
     user_profile_id = models.BigAutoField(primary_key=True)
     first_name = models.CharField(max_length=200, blank=True)
     last_name = models.CharField(max_length=200, blank=True)
@@ -57,12 +70,12 @@ class UserProfile(models.Model, ExternalUserProfile):
         return self.username
 
 
-class Child(models.Model):
+class ChildModel(Child, models.Model):
     child_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=200)
     age = models.IntegerField()
     carrots = models.IntegerField(default=0)
-    guardian_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    guardian = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def clean(self):
         if self.age > 18:
@@ -71,9 +84,57 @@ class Child(models.Model):
     def __str__(self):
         return f'{self.name} - {self.age} years old'
 
+    def get_child_id(self) -> str:
+        return self.child_id
+
+    def get_name(self) -> str:
+        return self.name
+
+    def get_age(self) -> int:
+        return self.age
+
+    def get_carrots(self) -> int:
+        return self.carrots
+
+    def get_guardian(self):
+        return self.guardian
+
+
+class Children(BaseChildren):
+
+    children: List[Child]
+    index: int
+
+    def __init__(self, children):
+        if children is None:
+            children = list()
+        self.children = children
+        self.index = 0
+
+    def __next__(self) -> Child:
+        try:
+            kid = self.children[self.index]
+        except IndexError:
+            raise StopIteration
+
+        self.index += 1
+        return kid
+
+    def get_child(self, child_idx: int) -> Child:
+        if child_idx >= len(self.children):
+            raise IndexError("list index out of range")
+        return self.children[child_idx]
+
+    def get_child_by_name(self, name: str) -> Child | None:
+        return next(child for child in self.children
+                    if child.get_name() == name)
+
+    @property
+    def family_size(self) -> int:
+        return len(self.children)
+
 
 class AuthTokenModel(AuthToken, models.Model):
-
     class Meta:
         db_table = "hr_user_auth_token"
 
@@ -84,15 +145,16 @@ class AuthTokenModel(AuthToken, models.Model):
         if not self.key:
             self.key = self.generate_key()
         return super(AuthToken, self).save(*args, **kwargs)
-    
+
     def get_key(self) -> str:
-        return self.keyem
+        return self.key
 
     def get_created(self) -> datetime.datetime:
         return self.created
 
     def is_expired(self) -> bool:
-        return self.get_created() < now() - datetime.timedelta(hours=int(getattr(settings, 'HAPPY_RABBIT_AUTH_TOKEN_EXPIRATION_HOURS', '24')))
+        return self.get_created() < now() - datetime.timedelta(
+            hours=int(getattr(settings, 'HAPPY_RABBIT_AUTH_TOKEN_EXPIRATION_HOURS', '24')))
 
     @staticmethod
     def generate_key():
@@ -100,7 +162,6 @@ class AuthTokenModel(AuthToken, models.Model):
 
 
 class Session(ExternalSession, models.Model):
-
     session_id = models.CharField(primary_key=True, max_length=40)
     account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True)
     date_logged_in = models.DateTimeField("date logged in", default=timezone.now)
@@ -126,3 +187,6 @@ class Session(ExternalSession, models.Model):
 
     def is_expired(self) -> bool:
         return not self.auth_token or self.auth_token.is_expired()
+
+    def is_authenticated(self) -> bool:
+        return not self.is_expired()
