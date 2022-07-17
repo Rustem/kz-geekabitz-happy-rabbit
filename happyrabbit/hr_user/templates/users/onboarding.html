@@ -23,59 +23,11 @@
             <div class="card border-top border-0 border-4 border-primary">
                 <div class="card-body p-5">
                     <div class="card-title d-flex align-items-center">
-                        <div><i class="bx bxs-user me-1 font-22 text-primary"></i>
-                        </div>
-                        <h5 class="mb-0 text-primary">Account</h5>
+                        <h5 class="mb-0 text-primary"><i class="bx bxs-baby-carriage me-1 font-22 text-primary"></i>Add kid</h5>
                     </div>
                     <hr>
                     <form class="row g-3" method="post">
                         {% csrf_token %}
-                        <div class="col-md-6">
-                            <label for="{{ form.account_form.id_for_label }}" class="form-label">External
-                                service</label>
-                            {{ account_form.external_service }}
-                            <div>{{ form.account_form.help_text }}</div>
-                            <div class="invalid-feedback">{{ form.account_form.errors }}</div>
-                        </div>
-                        <div class="col-md-6">
-
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ user_profile_form.first_name.id_for_label }}" class="form-label">First
-                                name</label>
-                            <input type="text" name="{{ user_profile_form.first_name.name }}" class="form-control"
-                                   id="{{ user_profile_form.first_name.id_for_label }}"
-                                   {% if user_profile_form.first_name.value != None %}value="{{ user_profile_form.first_name.value|stringformat:'s' }}"{% endif %}{% if user_profile_form.first_name.field.required %}required{% endif %}>
-                            <div>{{ user_profile_form.first_name.help_text }}</div>
-                            <div class="invalid-feedback">{{ user_profile_form.first_name.errors }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ user_profile_form.last_name.id_for_label }}" class="form-label">Last
-                                name</label>
-                            <input type="text" name="{{ user_profile_form.last_name.name }}" class="form-control"
-                                   id="{{ user_profile_form.last_name.id_for_label }}"
-                                   {% if user_profile_form.last_name.value != None %}value="{{ user_profile_form.last_name.value|stringformat:'s' }}"{% endif %}{% if user_profile_form.last_name.field.required %}required{% endif %}>
-                            <div>{{ user_profile_form.last_name.help_text }}</div>
-                            <div class="invalid-feedback">{{ user_profile_form.last_name.errors }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ user_profile_form.username.id_for_label }}"
-                                   class="form-label">Username</label>
-                            <input type="text" name="{{ user_profile_form.username.name }}" class="form-control"
-                                   id="{{ user_profile_form.username.id_for_label }}"
-                                   {% if user_profile_form.username.value != None %}value="{{ user_profile_form.username.value|stringformat:'s' }}"{% endif %}{% if user_profile_form.username.field.required %}required{% endif %}>
-                            <div>{{ user_profile_form.username.help_text }}</div>
-                            <div class="invalid-feedback">{{ user_profile_form.username.errors }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ user_profile_form.language_code.id_for_label }}" class="form-label">Language
-                                code</label>
-                            {{ user_profile_form.language_code }}
-                            <div>{{ user_profile_form.language_code.help_text }}</div>
-                            <div class="invalid-feedback">{{ user_profile_form.language_code.errors }}</div>
-                        </div>
-                        <h5 class="mb-0 text-primary"><i class="bx bxs-baby-carriage me-1 font-22 text-primary"></i>Your Kids
-                        </h5>
                         <div class="col-md-6">
                             <label for="{{ child_form.name.id_for_label }}" class="form-label">Child name</label>
                             <input type="text" name="{{ child_form.name.name }}" class="form-control"

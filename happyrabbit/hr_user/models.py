@@ -21,7 +21,7 @@ from happyrabbit.abc.family import Child, BaseChildren
 class Account(ExternalAccount, models.Model):
     account_id = models.BigAutoField(primary_key=True)
     external_service = models.CharField(max_length=200, choices=EXTERNAL_SERVICE_CHOICES)
-    external_user_id = models.IntegerField(blank=True, default=0)
+    external_user_id = models.IntegerField()
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def get_username(self):

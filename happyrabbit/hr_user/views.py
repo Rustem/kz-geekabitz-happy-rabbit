@@ -6,7 +6,7 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
-from .forms import UserRegisterForm, UserLoginForm, UserProfileForm, AccountUpdateForm, ChildUpdateForm
+from .forms import UserRegistrationForm, UserLoginForm, UserProfileForm, AccountUpdateForm, ChildUpdateForm
 from django.views.generic.edit import CreateView
 
 from .models import Account, UserProfile, ChildModel
@@ -30,7 +30,7 @@ class MainPageView(View):
 class UserRegistrationView(SuccessMessageMixin, CreateView):
     template_name = 'users/register.html'
     success_url = reverse_lazy('login')
-    form_class = UserRegisterForm
+    form_class = UserRegistrationForm
     success_message = "Your profile was created successfully"
 
     def get(self, request, **kwargs):
@@ -86,18 +86,8 @@ class UserOnBoardingView(View):
                                                             'user_profile_form': user_profile_form, 'message': message})
 
     def post(self, request):
-        account_form = AccountUpdateForm(request.POST)
-        user_profile_form = UserProfileForm(request.POST)
         child_form = ChildUpdateForm(request.POST)
-        if all([account_form.is_valid(), user_profile_form.is_valid(), child_form.is_valid()]):
-            account = account_form.save(commit=False)
-            account.user = request.user
-            account.save()
-
-            user_profile = user_profile_form.save(commit=False)
-            user_profile.account = account
-            user_profile.save(force_insert=True)
-
+        if child_form.is_valid():
             child = child_form.save(commit=False)
             child.guardian = request.user
             child.save()
@@ -105,8 +95,7 @@ class UserOnBoardingView(View):
             return redirect('profile')
 
         message = "Invalid Data"
-        return render(request, self.template_name, context={'account_form': account_form, 'child_form': child_form,
-                                                            'user_profile_form': user_profile_form, 'message': message})
+        return render(request, self.template_name, context={'child_form': child_form, 'message': message})
 
 
 class UserProfileView(LoginRequiredMixin, View):
