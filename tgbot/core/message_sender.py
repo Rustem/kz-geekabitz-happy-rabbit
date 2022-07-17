@@ -24,6 +24,8 @@ class MessageSender:
             reply_markup = self.options_to_reply_markup(options)
         else:
             reply_markup = {'hide_keyboard': True}
+
+        # text = text.replace(".", "\\.").replace("(", "\\(").replace(")", "\\)").replace("*", "\\*").replace("]", "\\]").replace("[", "\\[").replace("`", "\\`");
         self.bot.send_message(chat_id=chat_id,
                               text=text,
                               parse_mode="Markdown",
