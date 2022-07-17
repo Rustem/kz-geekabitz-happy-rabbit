@@ -20,12 +20,12 @@ class ReadOnlyForm(ModelForm):
             self.fields[field].required = False
 
 
-class UserRegisterForm(UserCreationForm):
+class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField()
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name']
+        fields = ['username', 'email']
 
 
 class UserLoginForm(AuthenticationForm):
