@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Callable, Tuple, Type
 
+from happyrabbit.abc.errors import IllegalStateError, IllegalArgumentError
 from tgbot.core.context import ConversationContext
 from tgbot.core.message_sender import MessageSender
 
 
-class DialogStateError(ValueError):
+class DialogStateError(IllegalStateError):
     """
     Raises for cases that causes illegal dialog state
     """
@@ -44,7 +45,7 @@ class Dialog(ABC):
             try:
                 num = int(key[4:])
             except (ValueError, TypeError) as e:
-                raise ValueError("step function naming convention: step_[0-9](*args)", e)
+                raise IllegalStateError("step function naming convention: step_[0-9](*args)", e)
 
             step_func = getattr(self, key)
             steps.append((num, step_func))
@@ -82,7 +83,7 @@ class Dialog(ABC):
     @staticmethod
     def execute_step(step: Tuple[int, Callable[[ConversationContext], bool]], context: ConversationContext) -> bool:
         if step is None or len(step) != 2:
-            raise ValueError("expect step to be a non-nullable tuple[int, callable]")
+            raise IllegalArgumentError("expect step to be a non-nullable tuple[int, callable]")
         # TODO log execution
         step_num, step_func = step
         return step_func(context)

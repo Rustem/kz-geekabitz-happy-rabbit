@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.forms import ModelForm
 
 from happyrabbit.abc.external_account import EXTERNAL_SERVICE_CHOICES, LANGUAGE_CODE_CHOICES
-from happyrabbit.hr_user.models import UserProfile, Account, Child
+from happyrabbit.hr_user.models import UserProfile, Account, ChildModel
 
 
 class ReadOnlyForm(ModelForm):
@@ -56,5 +56,5 @@ class AccountUpdateForm(ReadOnlyForm):
 
 class ChildUpdateForm(ModelForm):
     class Meta:
-        model = Child
+        model = ChildModel
         fields = ('name', 'age',)

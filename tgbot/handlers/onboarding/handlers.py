@@ -22,7 +22,7 @@ def chat_display(chat):
 
 
 def command_start(update: Update, context: CallbackContext) -> None:
-    external_account = telegram_user_backend.extract_external_profile(update)
+    external_account = telegram_user_backend.extract_external_account(update)
     external_profile = external_account.get_external_profile()
     # TODO get or create an account
     # TODO add new chat session

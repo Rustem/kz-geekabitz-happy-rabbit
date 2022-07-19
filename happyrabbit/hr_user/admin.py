@@ -3,11 +3,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 
-from .models import Account, UserProfile, Child
+from .models import Account, UserProfile, ChildModel
 
 
 class ChildInline(nested_admin.nested.NestedStackedInline):
-    model = Child
+    model = ChildModel
     extra = 1
     exclude = ['child_id']
 
