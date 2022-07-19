@@ -24,14 +24,14 @@ class CategoryCreateView(LoginRequiredMixin, View):
             category.owner = request.user
             category.save()
 
-            return redirect('activity_view')
+            return redirect('activity-view')
 
         message = "Invalid Data"
         return render(request, self.template_name, context={'category_form': category_form, 'message': message})
 
 
 class ActivityCreateView(LoginRequiredMixin, View):
-    template_name = 'activity/create.html'
+    template_name = 'activities/create.html'
 
     def get(self, request):
         activity_form = ActivityCreateForm()
@@ -46,7 +46,7 @@ class ActivityCreateView(LoginRequiredMixin, View):
             activity.owner = request.user
             activity.save()
 
-            return redirect('activity_view')
+            return redirect('activity-view')
 
         message = "Invalid Data"
         return render(request, self.template_name, context={'activity_form': activity_form, 'message': message})
@@ -68,14 +68,14 @@ class RewardRuleCreateView(LoginRequiredMixin, View):
             reward_rule.owner = request.user
             reward_rule.save()
 
-            return redirect('activity_view')
+            return redirect('activity-view')
 
         message = "Invalid Data"
         return render(request, self.template_name, context={'reward_rule_form': reward_rule_form, 'message': message})
 
 
-class ActivityView(LoginRequiredMixin, View):
-    template_name = 'activity/view.html'
+class ActivityListView(LoginRequiredMixin, View):
+    template_name = 'activities/list_view.html'
 
     def get(self, request):
         activities = Activity.objects.filter(Q(owner__isnull=True) | Q(owner__in=[request.user])).all()
