@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <!--breadcrumb-->
+    <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+        <div class="breadcrumb-title pe-3">Profile</div>
+        <div class="ps-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 p-0">
+                    <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Reward Rules</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!--end breadcrumb-->
+    <div class="row">
+        <div class="col-xl-7 mx-auto">
+            <h6 class="mb-0 text-uppercase">Reward Rules</h6>
+            <hr/>
+            <div class="card border-top border-0 border-4 border-primary">
+                <div class="card-body p-5">
+                    <div class="card-title d-flex align-items-center">
+                        <h5 class="mb-0 text-primary"><i class="bx bxs-baby-carriage me-1 font-22 text-primary"></i>Add Reward Rule for Activity</h5>
+                    </div>
+                    <hr>
+                    <form class="row g-3" method="post">
+                        {% csrf_token %}
+                        <div class="col-md-6">
+                            <label for="{{ reward_rule_form.duration.id_for_label }}" class="form-label">Duration</label>
+                            <input type="number" name="{{ reward_rule_form.duration.name }}" class="form-control"
+                                   id="{{ reward_rule_form.duration.id_for_label }}"
+                                   {% if reward_rule_form.duration.value != None %}value="{{ reward_rule_form.duration.value|stringformat:'s' }}"{% endif %}{% if reward_rule_form.duration.field.required %}required{% endif %}>
+                            <div>{{ reward_rule_form.duration.help_text }}</div>
+                            <div class="invalid-feedback">{{ reward_rule_form.duration.errors }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ reward_rule_form.reward_carrots.id_for_label }}" class="form-label">Reward Carrots</label>
+                            <input type="number" name="{{ reward_rule_form.reward_carrots.name }}" class="form-control"
+                                   id="{{ reward_rule_form.reward_carrots.id_for_label }}"
+                                      {% if reward_rule_form.reward_carrots.value != None %}value="{{ reward_rule_form.reward_carrots.value|stringformat:'s' }}"{% endif %}{% if reward_rule_form.reward_carrots.field.required %}required{% endif %}>
+                            <div>{{ reward_rule_form.reward_carrots.help_text }}</div>
+                            <div class="invalid-feedback">{{ reward_rule_form.reward_carrots.errors }}</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="{{ reward_rule_form.activity.id_for_label }}" class="form-label">Activity</label>
+                            <select name="{{ reward_rule_form.activity.name }}" class="form-select"
+                                   id="{{ reward_rule_form.activity.id_for_label }}"
+                                      {% if reward_rule_form.activity.value != None %}value="{{ reward_rule_form.activity.value|stringformat:'s' }}"{% endif %}{% if reward_rule_form.activity.field.required %}required{% endif %}>
+                                {% for item in activities %}
+                                    <option value="{{ item.activity_id }}">{{ item.title}}</option>
+                                {% endfor %}
+                            </select>
+                            <div>{{ reward_rule_form.activity.help_text }}</div>
+                            <div class="invalid-feedback">{{ reward_rule_form.activity.errors }}</div>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary px-5">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

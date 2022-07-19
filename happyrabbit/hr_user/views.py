@@ -77,13 +77,9 @@ class UserOnBoardingView(View):
     template_name = 'users/onboarding.html'
 
     def get(self, request):
-
-        account_form = AccountUpdateForm()
-        user_profile_form = UserProfileForm()
         child_form = ChildUpdateForm()
         message = ''
-        return render(request, self.template_name, context={'account_form': account_form, 'child_form': child_form,
-                                                            'user_profile_form': user_profile_form, 'message': message})
+        return render(request, self.template_name, context={'child_form': child_form, 'message': message})
 
     def post(self, request):
         child_form = ChildUpdateForm(request.POST)
