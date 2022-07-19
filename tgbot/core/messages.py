@@ -30,3 +30,36 @@ HI, {username}. Looks like your session is expired.
 Please login following the link below.
 *Link*: {login_url}
 """
+
+HELP = """
+Available commands:
+
+{available_commands}
+"""
+
+#
+# /status
+#
+
+STATUS_INVALID_TOKEN = """
+There is no active authentication key associated with this account.
+Use /start to login.
+"""
+
+STATUS_OK = """
+You are authenticated as @{username} at {date_logged_in}. 
+Try /help for list of available commands.
+"""
+
+#
+# /show_activities {category}
+#
+SHOW_ACTIVITIES_MISS_CATEGORY = """
+You have too many activities. Please include category in the request.
+Example: /show\\_activities science 
+"""
+
+SHOW_ACTIVITIES_OK = """
+Here is your activities:
+{inline_activities}
+"""

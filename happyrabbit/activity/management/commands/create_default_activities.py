@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from happyrabbit.activity.models import Category, Activity
+from happyrabbit.activity.models import Category, ActivityModel as Activity
 
 
 class Command(BaseCommand):
