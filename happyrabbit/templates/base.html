@@ -55,7 +55,13 @@
                     <div class="menu-title">User Profile</div>
                 </a>
             </li>
-
+            <li>
+                <a href="{% url 'activity-view' %}">
+                    <div class="parent-icon"><i class="bx bx-list-check"></i>
+                    </div>
+                    <div class="menu-title">Activities</div>
+                </a>
+            </li>
         </ul>
         <!--end navigation-->
     </div>
@@ -152,6 +158,12 @@
 <script src="{% static 'plugins/perfect-scrollbar/js/perfect-scrollbar.js' %}"></script>
 <!--app JS-->
 <script src="{% static 'js/app.js' %}"></script>
+<script>
+		$(function () {
+			$('[data-bs-toggle="popover"]').popover();
+			$('[data-bs-toggle="tooltip"]').tooltip();
+		})
+	</script>
 </body>
 
 </html>

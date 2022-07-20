@@ -22,4 +22,5 @@ urlpatterns = [
     path('', happyrabbit.hr_user.views.MainPageView.as_view(), name='home'),
     path('admin/', admin.site.urls),
     path('user/', include('happyrabbit.hr_user.urls')),
+    path('activity/', include('happyrabbit.activity.urls'))
 ]

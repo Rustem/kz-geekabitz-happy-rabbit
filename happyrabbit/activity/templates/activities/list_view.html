@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <!--breadcrumb-->
+    <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+        <div class="breadcrumb-title pe-3">Activities</div>
+        <div class="ps-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 p-0">
+                    <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Activities</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!--end breadcrumb-->
+
+    <div class="card">
+        <div class="card-body">
+            <div class="d-lg-flex align-items-center mb-4 gap-3">
+
+                <div class="ms-auto">
+                    <a href="{% url 'activity-create' %}" class="btn btn-primary radius-30 mt-2 mt-lg-0"><i
+                        class="bx bxs-plus-square"></i>Add Activity</a>
+                    <a href="{% url 'category-create' %}" class="btn btn-primary radius-30 mt-2 mt-lg-0"><i
+                        class="bx bxs-plus-square"></i>Add Category</a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Reward Rules</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in activities %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-2">
+                                            <h6 class="mb-0 font-14">{{ forloop.counter }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ activity.title }}</td>
+                                <td>{{ activity.description }}</td>
+                                <td>
+                                    <div class="badge rounded-pill text-success bg-light-success p-2 text-uppercase px-3"><i
+                                            class='bx bxs-circle me-1'></i>{{ activity.category.title }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <table class="table mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Duration</th>
+                                            <th>Carrots</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for reward_rule in activity.reward_rules.all %}
+                                                <tr>
+                                                    <td>{{ forloop.counter }}</td>
+                                                    <td>{{ reward_rule.duration }}</td>
+                                                    <td>{{ reward_rule.reward_carrots }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="d-flex order-actions">
+                                        <a href="{% url 'reward-rule-create' %}" class="" data-bs-toggle="tooltip" data-bs-placement="right" title="Add Reward Rule"><i class='bx bxs-plus-circle'></i></a>
+                                        <a href="javascript:;" class="ms-3"><i class='bx bxs-edit'></i></a>
+                                        <a href="javascript:;" class="ms-3"><i class='bx bxs-trash'></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
