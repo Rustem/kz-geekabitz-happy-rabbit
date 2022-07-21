@@ -1,11 +1,12 @@
 import logging
 
 from happyrabbit.abc.external_account import ExternalAccount
-from happyrabbit.hr_user.models import Session, Account, UserProfile
 from tgbot.application import HappyRabbitApplication
 from tgbot.core import messages
 from tgbot.core.base_bot import BaseBot
 from tgbot.core.context import ConversationContext
+from tgbot.core.decorators import command_handler, command_registry
+from tgbot.core.formatters.activity import inline_activity_list
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class HappyRabbitBot(BaseBot):
         bot_link = f"https://t.me/" + bot_info["username"]
         logging.info(f"Pooling of '{bot_link}' started")
 
+    @command_handler(description="To start your Happy Rabbit experience")
     def cmd_start(self, context: ConversationContext):
         if not context.args:
             # /start <-> command without args
@@ -78,31 +80,41 @@ class HappyRabbitBot(BaseBot):
                                                          messages.WELCOME_AUTHENTICATED_USER.format(username=session.get_username(),
                                                                                                     children=children_names))
 
-
-        # if session is part of context and session is active then return appropriate message
-        # otherwise using auth key query session
-            # if session is found then authenticate user
-            # if session is not found then ask user to login with login url
-        pass
-
+    @command_handler(description="To learn more about supported commands")
     def cmd_help(self, context: ConversationContext):
         # TODO return List of available commands with descriptions
-        raise NotImplementedError("Implement me")
+        available_commands = '\n'.join('{} - {}'.format(key, value)
+                                       for key, value in command_registry.items())
+        print(available_commands)
+        self.message_sender.send_message_for_context(context, messages.HELP.format(available_commands=available_commands))
 
+    @command_handler(description="To learn more details about an active session")
     def cmd_status(self, context: ConversationContext):
-        # TODO return detailed authentication status
-        raise NotImplementedError("Implement me")
+        session = self.happy_rabbit_app.get_active_session(context.update)
+        if session.is_authenticated():
+            login_date = session.get_login_date().strftime("%Y-%m-%d %H:%M:%S")
+            self.message_sender.send_message_for_context(context,
+                                                         messages.STATUS_OK.format(username=session.get_username(), date_logged_in=login_date))
+            return
+        if session.is_expired():
+            self.message_sender.send_message_for_context(context, messages.STATUS_INVALID_TOKEN)
+            return
+
+    # TODO add decorator @auth_required
+    @command_handler(description="To get a list of activities for a specified category")
+    def cmd_show_activities(self, context: ConversationContext):
+        if not context.args:
+            self.message_sender.send_message_for_context(context, messages.SHOW_ACTIVITIES_MISS_CATEGORY)
+            return
+        else:
+            category_name = context.args[0]
+            activities = self.happy_rabbit_app.search_activities(context.session, category_name)
+            inline_activities = inline_activity_list(activities)
+            self.message_sender.send_message_for_context(context, messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities))
+            return
 
     def wrap_context(self, context: ConversationContext):
-        # TODO move to backend
-        # 1 search session by external_user_id
-        # 2 if session is found than include user session as part of converation context
-        # 3 if session is not found, then don't include session
-        user = context.message.from_user
-        account = Account(external_user_id=user.id)
-        account.userprofile = UserProfile(username=user.username)
-        session = Session(session_id=context.chat_id, account=account)
-        # session, created = Session.objects.get_or_create(session_id=context.chat_id)
+        session = self.happy_rabbit_app.get_active_session(context.update)
         context.set_session(session)
         return context
 

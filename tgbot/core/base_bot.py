@@ -34,7 +34,7 @@ class BaseBot(ABC):
         self.message_sender = MessageSender(self.bot)
         self.dialogs = {}
 
-    @command_handler
+    @command_handler(description="To cancel current conversation")
     def cmd_cancel(self, context: ConversationContext):
         try:
             dialog = self.dialogs[context.chat_id]
