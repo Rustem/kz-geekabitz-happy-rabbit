@@ -10,6 +10,7 @@ from tgbot.service.activity import DefaultActivitySearchService
 from tgbot.service.external_account import TelegramUserService
 from tgbot.service.auth import AuthService
 from tgbot.service.family import FamilyService
+from happyrabbit.tracking.service.tracking import DefaultActivityTrackingService
 from tgbot.application import HappyRabbitApplication
 
 
@@ -36,7 +37,8 @@ def initialize_application():
     external_user_service = TelegramUserService()
     family_service = FamilyService()
     activity_search_service = DefaultActivitySearchService()
-    return HappyRabbitApplication(auth_service, external_user_service, family_service, activity_search_service)
+    activity_tracking_service = DefaultActivityTrackingService()
+    return HappyRabbitApplication(auth_service, external_user_service, family_service, activity_search_service, activity_tracking_service)
 
 
 if __name__ == "__main__":
