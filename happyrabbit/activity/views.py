@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 
 from happyrabbit.activity.forms import CategoryCreateForm, ActivityCreateForm, RewardRuleCreateForm
-from happyrabbit.activity.models import Category, ActivityModel
+from happyrabbit.activity.models import CategoryModel, ActivityModel
 
 
 class CategoryCreateView(LoginRequiredMixin, View):
@@ -35,7 +35,7 @@ class ActivityCreateView(LoginRequiredMixin, View):
 
     def get(self, request):
         activity_form = ActivityCreateForm()
-        categories = Category.objects.filter(Q(owner__isnull=True) | Q(owner__in=[request.user])).all()
+        categories = CategoryModel.objects.filter(Q(owner__isnull=True) | Q(owner__in=[request.user])).all()
         message = ''
         return render(request, self.template_name, context={'activity_form': activity_form, 'message': message, 'categories': categories})
 

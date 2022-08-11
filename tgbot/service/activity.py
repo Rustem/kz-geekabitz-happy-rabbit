@@ -3,7 +3,7 @@ from typing import List, Type
 from django.db.models import Q
 
 from happyrabbit.abc.activity import Activity
-from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery
+from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery, NextPageRequest, PaginatedResponse
 from happyrabbit.activity.models import ActivityModel
 
 
@@ -31,6 +31,7 @@ class SearchQueryBuilder:
 
 
 class DefaultActivitySearchService(ActivitySearchService):
+
     ALWAYS_TRUE = Q()
     ALWAYS_FALSE = Q(pk__in=[])
 
@@ -47,3 +48,10 @@ class DefaultActivitySearchService(ActivitySearchService):
         if search_query.page_size:
             matched = matched[:search_query.page_size]
         return matched
+
+    def search_paginated(self, search_query: SearchQuery) -> PaginatedResponse:
+        pass
+
+    def load_next_page(self, page_request: NextPageRequest) -> PaginatedResponse:
+        pass
+

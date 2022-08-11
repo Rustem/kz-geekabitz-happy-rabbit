@@ -1,11 +1,11 @@
 from django.forms import ModelForm
 
-from happyrabbit.activity.models import Category, ActivityModel, RewardRule
+from happyrabbit.activity.models import CategoryModel, ActivityModel, RewardRule
 
 
 class CategoryCreateForm(ModelForm):
     class Meta:
-        model = Category
+        model = CategoryModel
         fields = ('title', 'description', )
         verbose_name_plural = "categories"
 

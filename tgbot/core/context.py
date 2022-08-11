@@ -47,6 +47,12 @@ class ConversationContext:
         user_data = TelegramUserService.extract_user_data(self.update)
         return user_data['id']
 
+    def user_display(self):
+        account = self.session.get_account()
+        return "{}:{}".format(account.get_external_user_id(), account.get_username())
+
     def set_session(self, session: ExternalSession):
         self.session = session
 
+    def get_session(self) -> ExternalSession:
+        return getattr(self, 'session', None)

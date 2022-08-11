@@ -1,5 +1,9 @@
+import logging
 from happyrabbit.abc.errors import IllegalArgumentError
+from tgbot.core import messages
 from tgbot.core.context import ConversationContext
+
+logger = logging.getLogger(__name__)
 
 command_registry = dict()
 
@@ -24,3 +28,20 @@ def command_handler(description=None):
 
         return wrapper
     return wrapped_handler
+
+
+def auth_required(fn):
+    def wrapper(self, ctx, *args, **kwargs):
+        if not ctx.get_session().is_authenticated():
+            logger.info(
+                "{user} attempted to run command {name} in {chat} unauthorized".format(
+                    user=ctx.user_display(),
+                    chat=ctx.get_session().get_session_id(),
+                    name=fn.__name__))
+            self.message_sender.send_message_for_context(ctx, messages.STATUS_INVALID_TOKEN)
+            return
+        fn(self, ctx, *args, **kwargs)
+
+    wrapper.__name__ = fn.__name__
+    wrapper.__qualname__ = fn.__qualname__
+    return wrapper

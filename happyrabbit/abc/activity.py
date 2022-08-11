@@ -1,6 +1,18 @@
 from abc import abstractmethod
 
 
+class Category:
+
+    def get_category_id(self) -> int:
+        pass
+
+    def get_title(self) -> str:
+        pass
+
+    def get_description(self) -> str:
+        pass
+
+
 class Activity:
 
     @abstractmethod

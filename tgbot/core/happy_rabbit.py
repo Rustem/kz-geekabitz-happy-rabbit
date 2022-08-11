@@ -5,21 +5,17 @@ from tgbot.application import HappyRabbitApplication
 from tgbot.core import messages
 from tgbot.core.base_bot import BaseBot
 from tgbot.core.context import ConversationContext
-from tgbot.core.decorators import command_handler, command_registry
+from tgbot.core.decorators import command_handler, command_registry, auth_required
 from tgbot.core.formatters.activity import inline_activity_list
 
 logger = logging.getLogger(__name__)
-
-
-def user_display(account: ExternalAccount):
-    return "{}:{}".format(account.get_external_user_id(), account.get_username())
 
 
 def log_command(context: ConversationContext, cmd_name: str):
     message = "/{cmd_name} command was issued by {user} in {chat}"
     logger.info(message.format(
         cmd_name=cmd_name,
-        user=user_display(context.session.get_account()),
+        user=context.user_display(),
         chat=context.session.get_session_id()))
 
 
@@ -88,6 +84,7 @@ class HappyRabbitBot(BaseBot):
         print(available_commands)
         self.message_sender.send_message_for_context(context, messages.HELP.format(available_commands=available_commands))
 
+    @auth_required
     @command_handler(description="To learn more details about an active session")
     def cmd_status(self, context: ConversationContext):
         session = self.happy_rabbit_app.get_active_session(context.update)
@@ -100,7 +97,7 @@ class HappyRabbitBot(BaseBot):
             self.message_sender.send_message_for_context(context, messages.STATUS_INVALID_TOKEN)
             return
 
-    # TODO add decorator @auth_required
+    @auth_required
     @command_handler(description="To get a list of activities for a specified category")
     def cmd_show_activities(self, context: ConversationContext):
         if not context.args:
@@ -112,6 +109,11 @@ class HappyRabbitBot(BaseBot):
             inline_activities = inline_activity_list(activities)
             self.message_sender.send_message_for_context(context, messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities))
             return
+
+    @auth_required
+    @command_handler(description="Renumerate a child with carrots for doing activity")
+    def cmd_activities_for(self, context: ConversationContext):
+        raise NotImplementedError("implement soon")
 
     def wrap_context(self, context: ConversationContext):
         session = self.happy_rabbit_app.get_active_session(context.update)

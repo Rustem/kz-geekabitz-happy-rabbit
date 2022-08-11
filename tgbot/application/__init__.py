@@ -9,6 +9,7 @@ from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery
 from happyrabbit.abc.service.auth import BaseAuthService
 from happyrabbit.abc.service.external_account import ExternalUserService
 from happyrabbit.abc.service.family import BaseFamilyService
+from happyrabbit.abc.service.tracking import ActivityTrackingService
 from tgbot.service.activity import SearchQueryBuilder
 
 
@@ -17,16 +18,19 @@ class HappyRabbitApplication:
     external_user_service: ExternalUserService
     family_service: BaseFamilyService
     activity_search_service: ActivitySearchService
+    activity_tracking_service: ActivityTrackingService
 
     def __init__(self,
                  auth_service: BaseAuthService,
                  external_user_service: ExternalUserService,
                  family_service: BaseFamilyService,
-                 activity_search_service: ActivitySearchService):
+                 activity_search_service: ActivitySearchService,
+                 activity_tracking_service: ActivityTrackingService):
         self.auth_service = auth_service
         self.external_user_service = external_user_service
         self.family_service = family_service
         self.activity_search_service = activity_search_service
+        self.activity_tracking_service = activity_tracking_service
 
     def get_active_session(self, update: Update) -> ExternalSession:
         requester_account = self.external_user_service.extract_external_account(update)

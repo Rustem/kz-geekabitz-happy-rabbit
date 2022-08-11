@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from happyrabbit.activity.models import Category, ActivityModel as Activity
+from happyrabbit.activity.models import CategoryModel, ActivityModel as Activity
 
 
 class Command(BaseCommand):
@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        category = Category(title='default', description='Default category for first start')
+        category = CategoryModel(title='default', description='Default category for first start')
         category.save()
 
         activity = Activity(title='default', description='Default activity for first start', category=category)

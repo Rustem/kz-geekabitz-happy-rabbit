@@ -42,8 +42,8 @@ Available commands:
 #
 
 STATUS_INVALID_TOKEN = """
-There is no active authentication key associated with this account.
-Use /start to login.
+This account is not authenticated.
+Use /start to login in Happy Rabbit.
 """
 
 STATUS_OK = """

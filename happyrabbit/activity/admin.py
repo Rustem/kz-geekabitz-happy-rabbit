@@ -3,7 +3,7 @@ from django.contrib import admin
 # Register your models here.
 from django.contrib.admin import ModelAdmin
 
-from happyrabbit.activity.models import Category, ActivityModel, RewardRule
+from happyrabbit.activity.models import CategoryModel, ActivityModel, RewardRule
 
 
 class CategoryAdmin(ModelAdmin):
@@ -21,7 +21,7 @@ class RewardRuleAdmin(ModelAdmin):
     ordering = ['reward_rule_id']
 
 
-admin.site.register(Category, CategoryAdmin)
+admin.site.register(CategoryModel, CategoryAdmin)
 admin.site.register(ActivityModel, ActivityAdmin)
 admin.site.register(RewardRule, RewardRuleAdmin)
 

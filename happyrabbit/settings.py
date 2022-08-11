@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'tgbot.apps.TgbotConfig',
     'happyrabbit',
     'happyrabbit.hr_user.apps.AccountsConfig',
-    'happyrabbit.activity.apps.ActivityConfig'
+    'happyrabbit.activity.apps.ActivityConfig',
+    'happyrabbit.tracking.apps.TrackingConfig',
 ]
 
 MIDDLEWARE = [
