@@ -1,5 +1,7 @@
+import binascii
 import datetime
 import json
+import os
 
 from django.conf import settings
 from django.db import models
@@ -19,6 +21,7 @@ class CategoryModel(Category, models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # nullable to allow generic activities
 
     class Meta:
+        db_table = "activity_category"
         verbose_name = "Category"
         verbose_name_plural = "Categories"
 
@@ -29,7 +32,7 @@ class CategoryModel(Category, models.Model):
 class ActivityModel(Activity, models.Model):
 
     class Meta:
-        db_table = "activity_category"
+        db_table = "activity"
         verbose_name = "Activity"
         verbose_name_plural = "Activities"
 
@@ -57,8 +60,8 @@ class ActivityModel(Activity, models.Model):
         return self.category.title
 
 
-ACTIVITY_PAGE_SIZE = getattr(settings, 'ACTIVITY_PAGE_SIZE', 100)
-
+DEFAULT_ACTIVITY_PAGE_SIZE = getattr(settings, 'ACTIVITY_PAGE_SIZE', 100)
+DEFAULT_ACTIVITY_PAGINATION_TTL_MINUTES = getattr(settings, 'ACTIVITY_PAGINATION_TTL_MINUTES', 10)
 
 class SearchQueryJSONEncoder(SimpleJSONEncoder):
     type = SearchQuery
@@ -76,11 +79,17 @@ class ActivityPaginationModel(Pagination, models.Model):
     query = models.JSONField(encoder=SearchQueryJSONEncoder, decoder=SearchQueryJSONDecoder)
     created_at = models.DateTimeField(default=timezone.now)
     expire_at = models.DateTimeField()
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
 
     class Meta:
         db_table = "activity_pagination"
         verbose_name = "Pagination"
         verbose_name_plural = "Pagination Set"
+
+    def save(self, **kwargs):
+        if not self.expire_at:
+            self.expire_at = self.created_at + datetime.timedelta(minutes=DEFAULT_ACTIVITY_PAGINATION_TTL_MINUTES)
+        return super().save(**kwargs)
 
     def get_pagination_token(self) -> str:
         return self.pagination_token
@@ -95,13 +104,20 @@ class ActivityPaginationModel(Pagination, models.Model):
         return self.query
 
     def get_page_size(self) -> int:
-        return ACTIVITY_PAGE_SIZE
+        return DEFAULT_ACTIVITY_PAGE_SIZE
 
     def get_created_at(self) -> datetime.datetime:
         return self.created_at
 
     def get_expire_at(self) -> datetime.datetime:
         return self.expire_at
+
+    def get_owner_id(self) -> int:
+        return self.owner.pk
+
+    @staticmethod
+    def generate_key():
+        return binascii.hexlify(os.urandom(21)).decode()
 
 
 class RewardRule(models.Model):

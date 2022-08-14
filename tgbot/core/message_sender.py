@@ -1,6 +1,6 @@
 from typing import List
 
-from telegram import Bot
+from telegram import Bot, ReplyMarkup
 
 from tgbot.core.context import ConversationContext
 
@@ -15,16 +15,20 @@ class MessageSender:
         self.bot = bot
 
     def send_message_for_context(self, context: ConversationContext, text, **kwargs):
-        self.send_message(context.chat_id, text, reply_to=context.reply_to, **kwargs)
+        if 'reply_markup' in kwargs:
+            print(kwargs['reply_markup'])
+            context.message.reply_text(text, reply_markup=kwargs['reply_markup'])
+        else:
+            self.send_message(context.chat_id, text, reply_to=context.reply_to, **kwargs)
 
     def send_message(self, chat_id: int, text: str, *,
                      options: List[List[str]] = None,
-                     reply_to: int = None):
-        if options:
-            reply_markup = self.options_to_reply_markup(options)
-        else:
-            reply_markup = {'hide_keyboard': True}
-
+                     reply_to: int = None, reply_markup: ReplyMarkup = None):
+        if not reply_markup:
+            if options:
+                reply_markup = self.options_to_reply_markup(options)
+            else:
+                reply_markup = {'hide_keyboard': True}
         # text = text.replace(".", "\\.").replace("(", "\\(").replace(")", "\\)").replace("*", "\\*").replace("]", "\\]").replace("[", "\\[").replace("`", "\\`");
         self.bot.send_message(chat_id=chat_id,
                               text=text,
