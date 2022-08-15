@@ -6,7 +6,7 @@ from telegram.utils.types import JSONDict
 from happyrabbit.abc.service.activity import NextPageRequest
 
 
-class PaginationKeyboardMarkup(ReplyMarkup):
+class PaginationKeyboardMarkup:
     first_page_label = '« {}'
     previous_page_label = '‹ {}'
     next_page_label = '{} ›'
@@ -16,8 +16,9 @@ class PaginationKeyboardMarkup(ReplyMarkup):
     page_count: int
     pagination_token: str
     page_number: int
+    callback_handler: str
 
-    def __init__(self, page_count: int, pagination_token: str, page_number: int = 1):
+    def __init__(self, page_count: int, pagination_token: str, page_number: int = 1, callback_handler: str = None):
         if not page_number:
             page_number = 1
         if page_number > page_count:
@@ -25,18 +26,18 @@ class PaginationKeyboardMarkup(ReplyMarkup):
         self.page_number = page_number
         self.page_count = page_count
         self.pagination_token = pagination_token
+        self.callback_handler = callback_handler
 
-    def to_dict(self) -> JSONDict:
-        keyboard_control = self.build_keyboard_control()
-        return keyboard_control.to_dict()
+    def to_markup(self) -> InlineKeyboardMarkup:
+        return self.build_keyboard_control()
 
     def build_keyboard_control(self) -> InlineKeyboardMarkup:
         pagination_keyboard = self.build_keyboard()
-        return InlineKeyboardMarkup.from_column(pagination_keyboard)
+        return InlineKeyboardMarkup.from_row(pagination_keyboard)
 
     def build_keyboard(self) -> List[InlineKeyboardButton]:
         if self.page_count == 1:
-            return [self.btn(1)]
+            return []
 
         elif self.page_count <= 5:
             keyboard = []
@@ -83,6 +84,9 @@ class PaginationKeyboardMarkup(ReplyMarkup):
 
     def btn(self, num, first=None, previous=None, next=None, last=None):
         text = str(num)
+        client_params = {
+            "callback_handler": self.callback_handler
+        }
         if first:
             text = self.first_page_label.format(text)
         elif previous:
@@ -91,6 +95,6 @@ class PaginationKeyboardMarkup(ReplyMarkup):
             text = self.next_page_label.format(text)
         elif last:
             text = self.last_page_label.format(text)
-        page_request = NextPageRequest(self.pagination_token, num)
-        import json
-        return InlineKeyboardButton(text, callback_data=json.dumps(page_request.to_dict()))
+
+        page_request = NextPageRequest(self.pagination_token, num, client_params=client_params)
+        return InlineKeyboardButton(text, callback_data=NextPageRequest.base64_encode(page_request))

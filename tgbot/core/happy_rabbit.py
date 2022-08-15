@@ -106,12 +106,15 @@ class HappyRabbitBot(BaseBot):
         else:
             category_name = context.args[0]
             activities_page = self.happy_rabbit_app.search_activities(context.session, category_name)
-            reply_markup = PaginationKeyboardMarkup(activities_page.count, activities_page.pagination_token, activities_page.page_number)
+            reply_markup = PaginationKeyboardMarkup(activities_page.total_pages,
+                                                    activities_page.pagination_token,
+                                                    activities_page.page_number,
+                                                    callback_handler="show_activities")
             # reply_markup
             inline_activities = inline_activity_list(activities_page.items)
             self.message_sender.send_message_for_context(context,
                                                          messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities),
-                                                         reply_markup=reply_markup)
+                                                         reply_markup=reply_markup.to_markup())
             return
 
     @auth_required

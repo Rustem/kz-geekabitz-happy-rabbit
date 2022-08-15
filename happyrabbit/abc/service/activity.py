@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from django.conf import settings
+from telegram.utils.types import JSONDict
 
 from happyrabbit.abc.activity import Activity
 
@@ -31,10 +32,12 @@ class SearchQuery:
 class NextPageRequest:
     pagination_token: str
     page: int
+    client_params: JSONDict
 
-    def __init__(self, pagination_token: str, page: int):
+    def __init__(self, pagination_token: str, page: int, client_params: JSONDict=None):
         self.pagination_token = pagination_token
         self.page = page
+        self.client_params = client_params or {}
 
     def to_dict(self):
         return self.__dict__
@@ -92,13 +95,15 @@ class PaginatedResponse:
     count: int
     pagination_token: str
     page_number: int
+    total_pages: int
     next: NextPageRequest
     previous: NextPageRequest
 
     def __init__(self, items: List[Activity], count: int, pagination_token: str, page_number: int,
-                 next: NextPageRequest = None, previous: NextPageRequest = None):
+                 total_pages: int, next: NextPageRequest = None, previous: NextPageRequest = None):
         self.items = items
         self.count = count
+        self.total_pages = total_pages
         self.pagination_token = pagination_token
         self.page_number = page_number
         self.next = next

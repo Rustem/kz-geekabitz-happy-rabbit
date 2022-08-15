@@ -15,6 +15,7 @@ from tgbot.service.auth import AuthService
 from tgbot.service.family import FamilyService
 from happyrabbit.tracking.service.tracking import DefaultActivityTrackingService
 from tgbot.application import HappyRabbitApplication
+from tgbot.core.happy_rabbit import HappyRabbitBot
 
 
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
@@ -46,7 +47,6 @@ def initialize_application():
 
 if __name__ == "__main__":
     try:
-        from tgbot.core.happy_rabbit import HappyRabbitBot
         happy_rabbit_app = initialize_application()
         hr_bot = HappyRabbitBot(happy_rabbit_app, settings.TELEGRAM_TOKEN)
         hr_bot.run()

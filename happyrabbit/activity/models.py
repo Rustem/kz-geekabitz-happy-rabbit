@@ -60,7 +60,7 @@ class ActivityModel(Activity, models.Model):
         return self.category.title
 
 
-DEFAULT_ACTIVITY_PAGE_SIZE = getattr(settings, 'ACTIVITY_PAGE_SIZE', 100)
+DEFAULT_ACTIVITY_PAGE_SIZE = getattr(settings, 'ACTIVITY_PAGE_SIZE', 2)
 DEFAULT_ACTIVITY_PAGINATION_TTL_MINUTES = getattr(settings, 'ACTIVITY_PAGINATION_TTL_MINUTES', 10)
 
 class SearchQueryJSONEncoder(SimpleJSONEncoder):

@@ -5,6 +5,7 @@ from typing import List, Type
 from django.db.models import Q
 
 from happyrabbit.abc.activity import Activity
+from happyrabbit.abc.errors import PaginationNotFoundError, IllegalStateError
 from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery, NextPageRequest, PaginatedResponse
 from happyrabbit.activity.models import ActivityModel, ActivityPaginationModel, DEFAULT_ACTIVITY_PAGE_SIZE
 
@@ -61,7 +62,7 @@ class DefaultActivitySearchService(ActivitySearchService):
         pagination = ActivityPaginationModel()
         pagination_token = pagination.pagination_token = ActivityPaginationModel.generate_key()
         pagination.min_index = 1
-        pagination.max_index = int(total / page_size) + (total % page_size)
+        pagination.max_index = int(total / page_size) + int((total % page_size > 0))
         pagination.query = search_query
         pagination.owner_id = search_query.owner_id
         # 3 save pagination
@@ -70,13 +71,29 @@ class DefaultActivitySearchService(ActivitySearchService):
         # 4 prepare pagination response
         page_of_activities = activities[:page_size]
         next_page = NextPageRequest(2, pagination_token)
-        return PaginatedResponse(page_of_activities, total, pagination_token, 1, next_page, None)
+        return PaginatedResponse(page_of_activities, total, pagination_token, 1, pagination.max_index, next_page, None)
 
     def load_next_page(self, page_request: NextPageRequest) -> PaginatedResponse:
         # fetch from database
-        # if nothing found handle error
-        # if found make a query with offset
-        # take a slice for the next page
-        # prepare response
-        raise NotImplementedError("not implemented")
-
+        pagination = ActivityPaginationModel.objects.filter(pagination_token=page_request.pagination_token).first()
+        if not pagination:
+            # if nothing found handle error
+            raise PaginationNotFoundError(f'pagination for token [{page_request.pagination_token}] not found')
+        cur_page = min(pagination.max_index, max(pagination.min_index, page_request.page))
+        # TODO improve with limit offset
+        start_inclusive = cur_page * (DEFAULT_ACTIVITY_PAGE_SIZE - 1) + 1
+        end_exclusive = cur_page * DEFAULT_ACTIVITY_PAGE_SIZE + 1
+        search_query = pagination.get_query()
+        activities = self.search(search_query)
+        if not activities:
+            # TODO log suddenly no data, however a valid case since activities could be deleted
+            return PaginatedResponse([], 0, page_request.pagination_token, cur_page, cur_page,
+                                     None, cur_page > 1 and NextPageRequest(page_request.pagination_token, cur_page - 1) or None)
+        count = len(activities)
+        page_of_activities = activities[start_inclusive:end_exclusive]
+        next, prev = None
+        if cur_page < pagination.max_index:
+            next = NextPageRequest(page_request.pagination_token, cur_page + 1)
+        if cur_page > 1:
+            prev = NextPageRequest(page_request.pagination_token, cur_page - 1)
+        return PaginatedResponse(page_of_activities, count, page_request.pagination_token, cur_page, pagination.max_index, next, prev)
