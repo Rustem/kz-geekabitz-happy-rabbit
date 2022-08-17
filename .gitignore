@@ -37,3 +37,4 @@ happy-rabbit-venv
 .idea/
 
 *.sqlite3
+*.pickle

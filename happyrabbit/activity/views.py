@@ -79,4 +79,5 @@ class ActivityListView(LoginRequiredMixin, View):
 
     def get(self, request):
         activities = ActivityModel.objects.filter(Q(owner__isnull=True) | Q(owner__in=[request.user])).all()
+        print(activities)
         return render(request, self.template_name, context={'activities': activities})

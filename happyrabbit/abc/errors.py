@@ -10,3 +10,7 @@ class IllegalArgumentError(RuntimeError):
     @raises to indicate that a method has been passed an illegal or inappropriate argument.
     """
     pass
+
+
+class PaginationNotFoundError(IllegalStateError):
+    pass

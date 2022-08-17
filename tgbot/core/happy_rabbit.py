@@ -1,12 +1,12 @@
 import logging
 
-from happyrabbit.abc.external_account import ExternalAccount
 from tgbot.application import HappyRabbitApplication
 from tgbot.core import messages
 from tgbot.core.base_bot import BaseBot
 from tgbot.core.context import ConversationContext
 from tgbot.core.decorators import command_handler, command_registry, auth_required
 from tgbot.core.formatters.activity import inline_activity_list
+from tgbot.core.markup.pagination import PaginationKeyboardMarkup
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +105,16 @@ class HappyRabbitBot(BaseBot):
             return
         else:
             category_name = context.args[0]
-            activities = self.happy_rabbit_app.search_activities(context.session, category_name)
-            inline_activities = inline_activity_list(activities)
-            self.message_sender.send_message_for_context(context, messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities))
+            activities_page = self.happy_rabbit_app.search_activities(context.session, category_name)
+            reply_markup = PaginationKeyboardMarkup(activities_page.total_pages,
+                                                    activities_page.pagination_token,
+                                                    activities_page.page_number,
+                                                    callback_handler="show_activities")
+            # reply_markup
+            inline_activities = inline_activity_list(activities_page.items)
+            self.message_sender.send_message_for_context(context,
+                                                         messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities),
+                                                         reply_markup=reply_markup.to_markup())
             return
 
     @auth_required

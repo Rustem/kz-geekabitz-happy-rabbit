@@ -5,7 +5,7 @@ from telegram import Update
 
 from happyrabbit.abc.activity import Activity
 from happyrabbit.abc.external_account import ExternalSession
-from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery
+from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery, PaginatedResponse
 from happyrabbit.abc.service.auth import BaseAuthService
 from happyrabbit.abc.service.external_account import ExternalUserService
 from happyrabbit.abc.service.family import BaseFamilyService
@@ -46,7 +46,7 @@ class HappyRabbitApplication:
 
         return session
 
-    def search_activities(self, session: ExternalSession, category_name: str) -> List[Activity]:
+    def search_activities(self, session: ExternalSession, category_name: str) -> PaginatedResponse:
         if not session.is_authenticated():
             raise RuntimeError("user should be authenticated")
         owner_id = session.get_account().get_linked_user().pk
@@ -55,8 +55,8 @@ class HappyRabbitApplication:
             .with_owner_id(owner_id)\
             .with_include_orphaned(False)\
             .build()
-        activities = self.activity_search_service.search(search_query)
-        return activities
+        results = self.activity_search_service.search_paginated(search_query)
+        return results
 
     def get_children_display_names(self, user: User) -> List[str]:
         if user is None:
