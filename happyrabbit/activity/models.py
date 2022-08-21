@@ -60,8 +60,9 @@ class ActivityModel(Activity, models.Model):
         return self.category.title
 
 
-DEFAULT_ACTIVITY_PAGE_SIZE = getattr(settings, 'ACTIVITY_PAGE_SIZE', 2)
-DEFAULT_ACTIVITY_PAGINATION_TTL_MINUTES = getattr(settings, 'ACTIVITY_PAGINATION_TTL_MINUTES', 10)
+CONFIGURED_ACTIVITY_PAGE_SIZE = getattr(settings, 'ACTIVITY_PAGE_SIZE', 2)
+CONFIGURED_ACTIVITY_PAGINATION_TTL_MINUTES = getattr(settings, 'ACTIVITY_PAGINATION_TTL_MINUTES', 10)
+
 
 class SearchQueryJSONEncoder(SimpleJSONEncoder):
     type = SearchQuery
@@ -88,7 +89,7 @@ class ActivityPaginationModel(Pagination, models.Model):
 
     def save(self, **kwargs):
         if not self.expire_at:
-            self.expire_at = self.created_at + datetime.timedelta(minutes=DEFAULT_ACTIVITY_PAGINATION_TTL_MINUTES)
+            self.expire_at = self.created_at + datetime.timedelta(minutes=CONFIGURED_ACTIVITY_PAGINATION_TTL_MINUTES)
         return super().save(**kwargs)
 
     def get_pagination_token(self) -> str:
@@ -104,7 +105,7 @@ class ActivityPaginationModel(Pagination, models.Model):
         return self.query
 
     def get_page_size(self) -> int:
-        return DEFAULT_ACTIVITY_PAGE_SIZE
+        return CONFIGURED_ACTIVITY_PAGE_SIZE
 
     def get_created_at(self) -> datetime.datetime:
         return self.created_at

@@ -1,5 +1,4 @@
 import logging
-from typing import Callable
 
 from happyrabbit.abc.errors import IllegalArgumentError
 from tgbot.core import messages
@@ -18,13 +17,6 @@ def get_command_name(cmd_func):
     return '/' + func_name[4:].replace('_', '\\_')
 
 
-def get_callback_handler_name(cmd_func):
-    func_name = cmd_func.__name__
-    if not func_name.startswith('cb_'):
-        raise IllegalArgumentError("Command handler should have the following name: cmd_{\\w+} i.e. cmd_help")
-    return func_name[3:]
-
-
 def command_handler(description=None):
     def wrapped_handler(cmd_func):
         def wrapper(base_bot, context: ConversationContext):
@@ -38,26 +30,6 @@ def command_handler(description=None):
 
         return wrapper
     return wrapped_handler
-
-
-def inline_callback_handler(description=None):
-    def wrapped_handler(callback_func):
-        def wrapper(base_bot, context: ConversationContext):
-            return callback_func(base_bot, context)
-
-        name = inline_callback_handler.name = get_callback_handler_name(callback_func)
-        callback_handler_registry[name] = callback_func
-
-        return wrapper
-    return wrapped_handler
-
-
-def get_inline_callback_handler(handler_name) -> Callable:
-    global callback_handler_registry
-    callback_handler = callback_handler_registry.get(handler_name, None)
-    if not callback_handler:
-        raise IllegalArgumentError(f'callback handler [{handler_name}] not registered')
-    return callback_handler
 
 
 def auth_required(fn):

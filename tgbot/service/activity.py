@@ -1,14 +1,15 @@
-import binascii
-import os
-from typing import List, Type
+import logging
+from typing import List
 
 from django.db.models import Q
 
 from happyrabbit.abc.activity import Activity
 from happyrabbit.abc.errors import PaginationNotFoundError, IllegalStateError
 from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery, NextPageRequest, PaginatedResponse
-from happyrabbit.activity.models import ActivityModel, ActivityPaginationModel, DEFAULT_ACTIVITY_PAGE_SIZE
+from happyrabbit.activity.models import ActivityModel, ActivityPaginationModel, CONFIGURED_ACTIVITY_PAGE_SIZE
 
+
+logger = logging.getLogger(__name__)
 
 class SearchQueryBuilder:
 
@@ -56,7 +57,7 @@ class DefaultActivitySearchService(ActivitySearchService):
         # 1 make a search
         activities = self.search(search_query)
         total = len(activities)
-        page_size = DEFAULT_ACTIVITY_PAGE_SIZE
+        page_size = CONFIGURED_ACTIVITY_PAGE_SIZE
         # 2 create instance of ActivityPagination
         # TODO if already exists then reuse one
         pagination = ActivityPaginationModel()
@@ -75,16 +76,20 @@ class DefaultActivitySearchService(ActivitySearchService):
 
     def load_next_page(self, page_request: NextPageRequest) -> PaginatedResponse:
         # fetch from database
+        logger.info(f'Loading next page of activities: {page_request.to_dict()}')
         pagination = ActivityPaginationModel.objects.filter(pagination_token=page_request.pagination_token).first()
         if not pagination:
             # if nothing found handle error
             raise PaginationNotFoundError(f'pagination for token [{page_request.pagination_token}] not found')
         cur_page = min(pagination.max_index, max(pagination.min_index, page_request.page))
+
         # TODO improve with limit offset
-        start_inclusive = cur_page * (DEFAULT_ACTIVITY_PAGE_SIZE - 1) + 1
-        end_exclusive = cur_page * DEFAULT_ACTIVITY_PAGE_SIZE + 1
+        page_size = CONFIGURED_ACTIVITY_PAGE_SIZE
+        start_inclusive = (cur_page - 1) * page_size
+        end_exclusive = cur_page * page_size
         search_query = pagination.get_query()
         activities = self.search(search_query)
+
         if not activities:
             # TODO log suddenly no data, however a valid case since activities could be deleted
             return PaginatedResponse([], 0, page_request.pagination_token, cur_page, cur_page,
