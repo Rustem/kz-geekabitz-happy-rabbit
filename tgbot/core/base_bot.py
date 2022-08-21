@@ -3,20 +3,48 @@ import os.path
 from abc import ABC, abstractmethod
 from typing import Dict, Type, Callable, Optional
 
-from telegram import Bot, Update
+from telegram import Bot, Update, CallbackQuery, ReplyMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PicklePersistence, \
     CallbackQueryHandler, InvalidCallbackData
 from telegram.ext.callbackcontext import CC, CallbackContext
 from telegram.ext.utils.types import CCT
+from telegram.utils.types import JSONDict
 
 from happyrabbit.abc.errors import IllegalStateError
 from happyrabbit.abc.service.activity import NextPageRequest
 from tgbot.core.context import ConversationContext
-from tgbot.core.decorators import command_handler
+from tgbot.core.decorators import command_handler, get_inline_callback_handler, callback_handler_registry
 from tgbot.core.dialogs.base import Dialog
 from tgbot.core.message_sender import MessageSender
 
 logger = logging.getLogger(__name__)
+
+
+class ExtraParamContainer:
+
+    callback_handler: str
+
+    @staticmethod
+    def from_dict(extra_params: JSONDict):
+        return ExtraParamContainer(**extra_params)
+
+    def __init__(self, callback_handler:str =None):
+        self.callback_handler = callback_handler
+
+    def get_callback_handler(self) -> Callable:
+        return get_inline_callback_handler(self.callback_handler)
+
+
+class CallbackResult:
+    text: str
+    reply_markup: Optional[ReplyMarkup]
+
+    def __init__(self, text, reply_markup: Optional[ReplyMarkup]=None):
+        self.text = text
+        self.reply_markup = reply_markup
+
+    def to_dict(self) -> JSONDict:
+        return dict(**self.__dict__)
 
 
 class BaseBot(ABC):
@@ -60,8 +88,19 @@ class BaseBot(ABC):
         def wrapper(update: Update, callback_context: CallbackContext):
             context = ConversationContext(self.bot, update, callback_context.args)
             context = self.wrap_context(context)
-            handler(context)
+            return handler(context)
 
+        wrapper.__name__ = "wrapped (" + handler.__name__ + ")"
+        return wrapper
+
+    def _wrap_cb(self, handler) -> Callable[[Type[Bot], Type[Update], Type[CallbackContext]], None]:
+
+        def wrapper(update: Update, callback_context: CallbackContext):
+            context = ConversationContext(self.bot, update, callback_context.args)
+            context = self.wrap_context(context)
+            return handler(self, context)
+
+        wrapper.__name__ = "wrapped (" + handler.__name__ + ")"
         return wrapper
 
     def _msg_handler(self, update: Update, cct: CCT):
@@ -83,10 +122,25 @@ class BaseBot(ABC):
     def callback_data_handler(self, update: Update, context: CallbackContext):
         page_request = self.decode_callback_data(update.callback_query)
         if not page_request:
-            # TODO log warning
             print("warn: no callback data to parse")
             return
+
         print("decoded", page_request.to_dict())
+        # TODO get callback_handler
+        # TODO  execute callback_handler Result(text, reply_markup,
+        # TODO  if result is not none -> edit text response
+        extra_param_container = ExtraParamContainer.from_dict(page_request.extra_params)
+        callback_handler = extra_param_container.get_callback_handler()
+
+        print(f'Executing callback handler: {callback_handler}')
+
+        context.args = [page_request]
+        callback_result = callback_handler(update, context)
+        print("Reply with: ", callback_result.to_dict())
+        update.callback_query.edit_message_text(**callback_result.to_dict())
+
+        # we can delete the data stored for the query, because we've replaced the buttons
+        context.drop_callback_data(update.callback_query)
 
     def handle_invalid_button(self, update: Update, context: CallbackContext) -> None:
         """Informs the user that the button is no longer available."""
@@ -97,6 +151,9 @@ class BaseBot(ABC):
         print("invalid button")
 
     def run(self):
+        for key in callback_handler_registry:
+            callback_handler_registry[key] = self._wrap_cb(callback_handler_registry[key])
+
         for key in dir(self):
             # TODO instead verify that callable is decorated with @command_handler
             if not key.startswith('cmd_'):
@@ -107,6 +164,7 @@ class BaseBot(ABC):
 
             self.dispatcher.add_handler(
                 CommandHandler(cmd_name, handler, pass_args=True))
+
 
         self.dispatcher.add_error_handler(self._error_handler)
         self.dispatcher.add_handler(
@@ -126,7 +184,7 @@ class BaseBot(ABC):
     def command_not_found(self, context: ConversationContext):
         raise NotImplementedError("not implemented")
 
-    def decode_callback_data(self, callback_query) -> Optional[NextPageRequest]:
+    def decode_callback_data(self, callback_query: CallbackQuery) -> Optional[NextPageRequest]:
         callback_query.answer()
         encoded_callback_data = callback_query.data
         if not encoded_callback_data:

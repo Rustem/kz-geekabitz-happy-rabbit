@@ -1,10 +1,12 @@
 import logging
 
+from happyrabbit.abc.errors import IllegalStateError
+from happyrabbit.abc.service.activity import NextPageRequest
 from tgbot.application import HappyRabbitApplication
 from tgbot.core import messages
-from tgbot.core.base_bot import BaseBot
+from tgbot.core.base_bot import BaseBot, CallbackResult
 from tgbot.core.context import ConversationContext
-from tgbot.core.decorators import command_handler, command_registry, auth_required
+from tgbot.core.decorators import command_handler, command_registry, auth_required, inline_callback_handler
 from tgbot.core.formatters.activity import inline_activity_list
 from tgbot.core.markup.pagination import PaginationKeyboardMarkup
 
@@ -116,6 +118,24 @@ class HappyRabbitBot(BaseBot):
                                                          messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities),
                                                          reply_markup=reply_markup.to_markup())
             return
+
+    @auth_required
+    @inline_callback_handler(description="handles next activity paginated request")
+    def cb_show_activities(self, context: ConversationContext):
+        print("Calling cb_show_activities with context: ", context)
+        if not context.args or not isinstance(context.args[0], NextPageRequest):
+            raise IllegalStateError("")
+
+        page_request = context.args[0]
+        activities_page = self.happy_rabbit_app.load_next_page_of_activities(context.session, page_request)
+        reply_markup = PaginationKeyboardMarkup(activities_page.total_pages,
+                                                activities_page.pagination_token,
+                                                activities_page.page_number,
+                                                callback_handler="show_activities")
+        inline_activities = inline_activity_list(activities_page.items)
+        return CallbackResult(text=messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities),
+                              reply_markup=reply_markup.to_markup())
+
 
     @auth_required
     @command_handler(description="Renumerate a child with carrots for doing activity")

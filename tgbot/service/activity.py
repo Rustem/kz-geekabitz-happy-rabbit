@@ -91,7 +91,7 @@ class DefaultActivitySearchService(ActivitySearchService):
                                      None, cur_page > 1 and NextPageRequest(page_request.pagination_token, cur_page - 1) or None)
         count = len(activities)
         page_of_activities = activities[start_inclusive:end_exclusive]
-        next, prev = None
+        next, prev = None, None
         if cur_page < pagination.max_index:
             next = NextPageRequest(page_request.pagination_token, cur_page + 1)
         if cur_page > 1:
