@@ -1,14 +1,12 @@
 from typing import Type
 
-from telegram.utils.types import JSONDict
-
 from happyrabbit.abc.service.activity import NextPageRequest
+from happyrabbit.activity.models import CONFIGURED_ACTIVITY_PAGE_SIZE
 from tgbot.application import HappyRabbitApplication
-from tgbot.core import messages
 from tgbot.core.callback_handlers.base import CallbackHandler, Event, CallbackResult
 from tgbot.core.context import ConversationContext
-from tgbot.core.formatters.activity import inline_activity_list
 from tgbot.core.markup.pagination import PaginationKeyboardMarkup
+from tgbot.core.renderer.django_template import DjangoTemplateRenderer
 
 
 class PaginationEvent(Event):
@@ -28,9 +26,11 @@ class PaginationEvent(Event):
 class PaginationCallbackHandler(CallbackHandler):
 
     happy_rabbit_app: HappyRabbitApplication
+    template_renderer: DjangoTemplateRenderer
 
-    def __init__(self, happy_rabbit_app: HappyRabbitApplication):
+    def __init__(self, happy_rabbit_app: HappyRabbitApplication, template_renderer: DjangoTemplateRenderer):
         self.happy_rabbit_app = happy_rabbit_app
+        self.template_renderer = template_renderer
 
     @property
     def event_class(self) -> Type[Event]:
@@ -49,12 +49,14 @@ class PaginationCallbackHandler(CallbackHandler):
         # TODO add error handling mechanism CallbackResult.error()
         page_request = event.parse_payload()
         activities_page = self.happy_rabbit_app.load_next_page_of_activities(context.session, page_request)
-
+        rendered_text = self.template_renderer.render("activities/show_activities.txt",
+                                                      number_offset=(activities_page.page_number - 1) * CONFIGURED_ACTIVITY_PAGE_SIZE,
+                                                      activities=activities_page.items,
+                                                      page_number=activities_page.page_number)
         reply_markup = PaginationKeyboardMarkup(activities_page.total_pages,
                                                 activities_page.pagination_token,
                                                 activities_page.page_number,
                                                 callback_data_provider=PaginationEvent.create)
-        inline_activities = inline_activity_list(activities_page.page_number, activities_page.items)
         return CallbackResult.success(
-            text=messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities),
+            text=rendered_text,
             reply_markup=reply_markup.to_markup())
