@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional, Callable
 
-from telegram import ReplyMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.utils.types import JSONDict
 
 from happyrabbit.abc.service.activity import NextPageRequest
+from tgbot.core.callback_handlers import Event
 
 
 class PaginationKeyboardMarkup:
@@ -16,9 +17,10 @@ class PaginationKeyboardMarkup:
     page_count: int
     pagination_token: str
     page_number: int
-    callback_handler: str
+    callback_data_provider: Callable[[str], Event]
 
-    def __init__(self, page_count: int, pagination_token: str, page_number: int = 1, callback_handler: str = None):
+    def __init__(self, page_count: int, pagination_token: str, page_number: int = 1,
+                 callback_data_provider: Callable[[str], Event] = None):
         if not page_number:
             page_number = 1
         if page_number > page_count:
@@ -26,7 +28,7 @@ class PaginationKeyboardMarkup:
         self.page_number = page_number
         self.page_count = page_count
         self.pagination_token = pagination_token
-        self.callback_handler = callback_handler
+        self.callback_data_provider = callback_data_provider
 
     def to_markup(self) -> InlineKeyboardMarkup:
         return self.build_keyboard_control()
@@ -84,9 +86,6 @@ class PaginationKeyboardMarkup:
 
     def btn(self, num, first=None, previous=None, next=None, last=None):
         text = str(num)
-        client_params = {
-            "callback_handler": self.callback_handler
-        }
         if first:
             text = self.first_page_label.format(text)
         elif previous:
@@ -96,5 +95,6 @@ class PaginationKeyboardMarkup:
         elif last:
             text = self.last_page_label.format(text)
 
-        page_request = NextPageRequest(self.pagination_token, num, client_params=client_params)
-        return InlineKeyboardButton(text, callback_data=NextPageRequest.base64_encode(page_request))
+        page_request = NextPageRequest(self.pagination_token, num)
+        callback_data = self.callback_data_provider(NextPageRequest.base64_encode(page_request))
+        return InlineKeyboardButton(text, callback_data=callback_data)

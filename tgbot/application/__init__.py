@@ -4,8 +4,9 @@ from django.contrib.auth.models import User
 from telegram import Update
 
 from happyrabbit.abc.activity import Activity
+from happyrabbit.abc.errors import IllegalStateError
 from happyrabbit.abc.external_account import ExternalSession
-from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery, PaginatedResponse
+from happyrabbit.abc.service.activity import ActivitySearchService, SearchQuery, PaginatedResponse, NextPageRequest
 from happyrabbit.abc.service.auth import BaseAuthService
 from happyrabbit.abc.service.external_account import ExternalUserService
 from happyrabbit.abc.service.family import BaseFamilyService
@@ -48,7 +49,7 @@ class HappyRabbitApplication:
 
     def search_activities(self, session: ExternalSession, category_name: str) -> PaginatedResponse:
         if not session.is_authenticated():
-            raise RuntimeError("user should be authenticated")
+            raise IllegalStateError("user should be authenticated")
         owner_id = session.get_account().get_linked_user().pk
         search_query = SearchQueryBuilder()\
             .with_category_name(category_name)\
@@ -56,6 +57,12 @@ class HappyRabbitApplication:
             .with_include_orphaned(False)\
             .build()
         results = self.activity_search_service.search_paginated(search_query)
+        return results
+
+    def load_next_page_of_activities(self, session: ExternalSession, page_request: NextPageRequest) -> PaginatedResponse:
+        if not session.is_authenticated():
+            raise IllegalStateError("user should be authenticated")
+        results = self.activity_search_service.load_next_page(page_request)
         return results
 
     def get_children_display_names(self, user: User) -> List[str]:

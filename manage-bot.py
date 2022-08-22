@@ -7,7 +7,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'happyrabbit.settings')
 django.setup()
 
 import http.client
-http.client.HTTPConnection.debuglevel = 5
+# NOTE turn on for tracing network
+# http.client.HTTPConnection.debuglevel = 5
 
 from tgbot.service.activity import DefaultActivitySearchService
 from tgbot.service.external_account import TelegramUserService

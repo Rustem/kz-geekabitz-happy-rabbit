@@ -16,7 +16,6 @@ class MessageSender:
 
     def send_message_for_context(self, context: ConversationContext, text, **kwargs):
         if 'reply_markup' in kwargs:
-            print(kwargs['reply_markup'])
             context.message.reply_text(text, reply_markup=kwargs['reply_markup'])
         else:
             self.send_message(context.chat_id, text, reply_to=context.reply_to, **kwargs)

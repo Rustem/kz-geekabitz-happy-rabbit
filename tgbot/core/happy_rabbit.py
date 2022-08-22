@@ -1,8 +1,8 @@
 import logging
-
 from tgbot.application import HappyRabbitApplication
 from tgbot.core import messages
 from tgbot.core.base_bot import BaseBot
+from tgbot.core.callback_handlers import TgInlineCallbackHandler, PaginationCallbackHandler, PaginationEvent
 from tgbot.core.context import ConversationContext
 from tgbot.core.decorators import command_handler, command_registry, auth_required
 from tgbot.core.formatters.activity import inline_activity_list
@@ -23,6 +23,8 @@ class HappyRabbitBot(BaseBot):
 
     happy_rabbit_app: HappyRabbitApplication
 
+    callback_handler: TgInlineCallbackHandler
+
     def __init__(self, happy_rabbit_app: HappyRabbitApplication, telegram_token: str):
         super().__init__(telegram_token)
         self.happy_rabbit_app = happy_rabbit_app
@@ -31,6 +33,17 @@ class HappyRabbitBot(BaseBot):
         bot_info = self.bot.get_me()
         bot_link = f"https://t.me/" + bot_info["username"]
         logging.info(f"Pooling of '{bot_link}' started")
+        self.initialize()
+
+    def initialize(self):
+        self.initialize_callback_handler(self.happy_rabbit_app)
+
+    def initialize_callback_handler(self, happy_rabbit_app):
+        callback_handlers = (
+            PaginationCallbackHandler(happy_rabbit_app),
+        )
+        self.callback_handler = TgInlineCallbackHandler(callback_handlers)
+
 
     @command_handler(description="To start your Happy Rabbit experience")
     def cmd_start(self, context: ConversationContext):
@@ -81,7 +94,6 @@ class HappyRabbitBot(BaseBot):
         # TODO return List of available commands with descriptions
         available_commands = '\n'.join('{} - {}'.format(key, value)
                                        for key, value in command_registry.items())
-        print(available_commands)
         self.message_sender.send_message_for_context(context, messages.HELP.format(available_commands=available_commands))
 
     @auth_required
@@ -106,12 +118,13 @@ class HappyRabbitBot(BaseBot):
         else:
             category_name = context.args[0]
             activities_page = self.happy_rabbit_app.search_activities(context.session, category_name)
+            # TODO if no activities ?
             reply_markup = PaginationKeyboardMarkup(activities_page.total_pages,
                                                     activities_page.pagination_token,
                                                     activities_page.page_number,
-                                                    callback_handler="show_activities")
+                                                    callback_data_provider=PaginationEvent.create)
             # reply_markup
-            inline_activities = inline_activity_list(activities_page.items)
+            inline_activities = inline_activity_list(activities_page.page_number, activities_page.items)
             self.message_sender.send_message_for_context(context,
                                                          messages.SHOW_ACTIVITIES_OK.format(inline_activities=inline_activities),
                                                          reply_markup=reply_markup.to_markup())
@@ -121,6 +134,10 @@ class HappyRabbitBot(BaseBot):
     @command_handler(description="Renumerate a child with carrots for doing activity")
     def cmd_activities_for(self, context: ConversationContext):
         raise NotImplementedError("implement soon")
+
+    @auth_required
+    def callback_query_handler(self, context: ConversationContext):
+        self.callback_handler.handle(context)
 
     def wrap_context(self, context: ConversationContext):
         session = self.happy_rabbit_app.get_active_session(context.update)

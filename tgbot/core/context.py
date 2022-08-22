@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional
 
-from telegram import Update, Bot
+from telegram import Update, Bot, CallbackQuery
+from telegram.ext import CallbackContext
 from telegram.message import Message
 
 from happyrabbit.abc.external_account import ExternalSession, ExternalAccount
@@ -16,11 +17,14 @@ class ConversationContext:
 
     session: ExternalSession
 
-    def __init__(self, bot: Bot, update: Update, args: List[str]=None):
+    callback_context: CallbackContext
+
+    def __init__(self, bot: Bot, update: Update, callback_context: CallbackContext):
         self.session = None
         self.bot = bot
         self.update = update
-        self.args = args or []
+        self.args = callback_context.args or []
+        self.callback_context = callback_context
 
     @property
     def message(self) -> Message:
@@ -56,3 +60,11 @@ class ConversationContext:
 
     def get_session(self) -> ExternalSession:
         return getattr(self, 'session', None)
+
+    @property
+    def callback_query(self) -> Optional[CallbackQuery]:
+        return self.update.callback_query
+
+    def drop_callback_data(self):
+        if self.callback_query is not None:
+            self.callback_context.drop_callback_data(self.callback_query)

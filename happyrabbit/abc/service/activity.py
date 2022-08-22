@@ -32,12 +32,12 @@ class SearchQuery:
 class NextPageRequest:
     pagination_token: str
     page: int
-    client_params: JSONDict
+    extra_params: JSONDict
 
-    def __init__(self, pagination_token: str, page: int, client_params: JSONDict=None):
+    def __init__(self, pagination_token: str, page: int, extra_params: JSONDict=None):
         self.pagination_token = pagination_token
         self.page = page
-        self.client_params = client_params or {}
+        self.extra_params = extra_params or {}
 
     def to_dict(self):
         return self.__dict__

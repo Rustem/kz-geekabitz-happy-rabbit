@@ -1,4 +1,5 @@
 import logging
+
 from happyrabbit.abc.errors import IllegalArgumentError
 from tgbot.core import messages
 from tgbot.core.context import ConversationContext
@@ -6,6 +7,7 @@ from tgbot.core.context import ConversationContext
 logger = logging.getLogger(__name__)
 
 command_registry = dict()
+callback_handler_registry = dict()
 
 
 def get_command_name(cmd_func):
