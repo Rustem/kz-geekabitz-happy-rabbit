@@ -1,0 +1,10 @@
+{% extends 'base_plain.txt' %}
+{% block content %}
+Here is your activities:
+{% for activity in activities %}{% spaceless %}
+{% with order_num=number_offset|add:forloop.counter %}
+{% include 'activities/inline_detail.txt' with order_num=order_num activity=activity %}
+{% endwith %}
+{% endspaceless %}
+{% endfor %}
+{% endblock %}

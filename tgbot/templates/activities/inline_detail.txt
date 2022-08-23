@@ -1,0 +1,4 @@
+{% extends 'base_plain.txt' %}
+{% block content %}
+{{ order_num }}. {{ activity.get_title }} {% if activity.get_description %} - {{ activity.get_description }} {% endif %}
+{% endblock %}
