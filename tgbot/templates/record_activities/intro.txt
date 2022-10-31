@@ -1,0 +1,5 @@
+Awesome @{{ username }}! To record new activity we will walk through few simple steps:
+Step-1: choose a child
+Step-2: select an activity
+Step-3: pick a reward
+Step-4: collect 🥕s

@@ -47,6 +47,8 @@ class TgInlineCallbackHandler:
 
         # we can delete the data stored for the query, because we've replaced the buttons
         context.drop_callback_data()
+        if callback_result.next_state is not None:
+            return callback_result.next_state
 
     @staticmethod
     def decode_callback_data(callback_query: CallbackQuery) -> Optional[Event]:

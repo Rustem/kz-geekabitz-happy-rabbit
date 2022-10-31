@@ -1,4 +1,8 @@
 import logging
+from typing import List
+
+from telegram import ReplyKeyboardMarkup
+from telegram.ext import ConversationHandler, CommandHandler, CallbackQueryHandler, MessageHandler, filters, Filters
 
 from happyrabbit.activity.models import CONFIGURED_ACTIVITY_PAGE_SIZE
 from tgbot.application import HappyRabbitApplication
@@ -7,6 +11,7 @@ from tgbot.core.base_bot import BaseBot
 from tgbot.core.callback_handlers import TgInlineCallbackHandler, PaginationCallbackHandler, PaginationEvent
 from tgbot.core.context import ConversationContext
 from tgbot.core.decorators import command_handler, command_registry, auth_required
+from tgbot.core.dialogs.record_activity import RecordActivityDialog
 from tgbot.core.markup.pagination import PaginationKeyboardMarkup
 from tgbot.core.renderer.django_template import DjangoTemplateRenderer
 
@@ -21,7 +26,11 @@ def log_command(context: ConversationContext, cmd_name: str):
         chat=context.session.get_session_id()))
 
 
+CHILD_CHOICE, ACTIVITY_CHOICE, REWARD_CHOICE, DONE = range(4)
+
+
 class HappyRabbitBot(BaseBot):
+
     happy_rabbit_app: HappyRabbitApplication
 
     callback_handler: TgInlineCallbackHandler
@@ -42,7 +51,6 @@ class HappyRabbitBot(BaseBot):
         self.initialize_template_renderer()
         self.initialize_callback_handler()
 
-
     def initialize_callback_handler(self):
         callback_handlers = (
             PaginationCallbackHandler(self.happy_rabbit_app, self.template_renderer),
@@ -51,6 +59,31 @@ class HappyRabbitBot(BaseBot):
 
     def initialize_template_renderer(self):
         self.template_renderer = DjangoTemplateRenderer()
+
+    def add_conversation_handlers(self) -> List[ConversationHandler]:
+        # Include more conversation handlers if needed
+        conv_handler = ConversationHandler(
+            entry_points=[CommandHandler("record_activity", self._wrap_cmd(self.cmd_record_activity))],
+            states={
+                CHILD_CHOICE: [
+                    MessageHandler(
+                        Filters.regex("^Start"), self._wrap_cmd(self.record_activity_child_choice)
+                    ),
+                ],
+                # ACTIVITY_CHOICE: [
+                #     CallbackQueryHandler(self._wrap_cmd(self.callback_query_handler), pass_user_data=True)
+                # ],
+                # REWARD_CHOICE: [
+                #     CallbackQueryHandler(self._wrap_cmd(self.callback_query_handler), pass_user_data=True)
+                # ],
+                # RECORD_ACTIVITY_DONE: [
+                #     # TODO
+                # ]
+            },
+            fallbacks=[]
+        )
+
+        return []
 
     @command_handler(description="To start your Happy Rabbit experience")
     def cmd_start(self, context: ConversationContext):
@@ -145,13 +178,38 @@ class HappyRabbitBot(BaseBot):
             return
 
     @auth_required
-    @command_handler(description="Renumerate a child with carrots for doing activity")
-    def cmd_activities_for(self, context: ConversationContext):
-        raise NotImplementedError("implement soon")
+    @command_handler(description="Renumerate a child with carrots for completing an activity")
+    def cmd_record_activity(self, context: ConversationContext) -> int:
+        # reply_keyboard = [
+        #     ['Start'],
+        #     ['Cancel'],
+        # ]
+        # markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+        text = self.template_renderer.render("record_activities/intro.txt",
+                                             username=context.session.get_username())
+        self.message_sender.send_message_for_context(context, text)
+        dialog = RecordActivityDialog(self.message_sender)
+        # TODO log dialog
+        self.start_dialog(context, dialog)
+        return CHILD_CHOICE
+
+    @auth_required
+    def record_activity_child_choice(self, context: ConversationContext) -> int:
+        text = "Safina or Sander"
+        self.message_sender.send_message_for_context(context, text)
+        return ConversationHandler.END
+
+    def record_activity_done(self, context: ConversationContext) -> int:
+        print("record activity done")
+        return ConversationHandler.END
 
     @auth_required
     def callback_query_handler(self, context: ConversationContext):
-        self.callback_handler.handle(context)
+        result = self.callback_handler.handle(context)
+        if result is not None and isinstance(result, int):
+            logger.info("Next conversation handler state is %s", result)
+            return result
 
     def wrap_context(self, context: ConversationContext):
         session = self.happy_rabbit_app.get_active_session(context.update)
