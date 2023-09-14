@@ -4,6 +4,7 @@ from typing import List, Callable, Tuple, Type
 from happyrabbit.abc.errors import IllegalStateError, IllegalArgumentError
 from tgbot.core.context import ConversationContext
 from tgbot.core.message_sender import MessageSender
+from tgbot.core.renderer.django_template import DjangoTemplateRenderer
 
 
 class DialogStateError(IllegalStateError):
@@ -43,6 +44,9 @@ class Dialog(ABC):
             if not key.startswith('step'): continue
 
             try:
+                suffix = key[4:]
+                if not suffix.isnumeric():
+                    continue
                 num = int(key[4:])
             except (ValueError, TypeError) as e:
                 raise IllegalStateError("step function naming convention: step_[0-9](*args)", e)
@@ -50,6 +54,9 @@ class Dialog(ABC):
             step_func = getattr(self, key)
             steps.append((num, step_func))
         return sorted(steps, key=lambda s: s[0])
+
+    def execute_current_turn(self, context: ConversationContext):
+        self.execute_turn(self.dialog_state.current_step, context)
 
     def advance_next(self, context: ConversationContext) -> bool:
         """
@@ -59,45 +66,56 @@ class Dialog(ABC):
         if self.dialog_state.is_completed():
             raise DialogStateError("Dialog.advance_next called after dialog is completed.")
 
-        if self.execute_step(self.dialog_state.current_step, context):
+        if self.handle_turn(self.dialog_state.current_step, context):
             self.dialog_state.advance_next()
 
         if self.dialog_state.is_completed():
             return True
 
-        self.on_step_completed(self.dialog_state.current_step, context)
+        self.execute_turn(self.dialog_state.current_step, context)
         return False
 
     @abstractmethod
-    def on_step_completed(self, step: Tuple[int, Callable], context: ConversationContext):
-        f"""A hook to send a signal back to originator about a just completed dialog step with conversation context
+    def execute_turn(self, step: Tuple[int, Callable], context: ConversationContext):
+        f"""Service (bot) requests information from the user for this step
         @param {Tuple[int, Callable]} step to execute
         @param {ConversationContext} context a conversation context
         """
         raise NotImplementedError("derived class will implement")
 
-    @abstractmethod
-    def cancel(self) -> bool:
-        raise NotImplementedError("derived class can implement me")
-
     @staticmethod
-    def execute_step(step: Tuple[int, Callable[[ConversationContext], bool]], context: ConversationContext) -> bool:
+    def handle_turn(step: Tuple[int, Callable[[ConversationContext], bool]], context: ConversationContext) -> bool:
+        f"""Service (bot) processes collected information from the user. 
+        """
         if step is None or len(step) != 2:
             raise IllegalArgumentError("expect step to be a non-nullable tuple[int, callable]")
         # TODO log execution
         step_num, step_func = step
         return step_func(context)
 
+    @abstractmethod
+    def cancel(self, context: ConversationContext) -> bool:
+        raise NotImplementedError("derived class can implement me")
+
 
 class MessageDialog(Dialog, ABC):
     message_sender: MessageSender
+    template_renderer: DjangoTemplateRenderer
 
     def __init__(self, message_sender: MessageSender):
         super().__init__()
         self.message_sender = message_sender
+        self.template_renderer = DjangoTemplateRenderer()
 
-    def on_step_completed(self, step: Tuple[int, Callable], context: ConversationContext):
-        step_fn = step[1]
-        options = getattr(self, step_fn.__name__ + '_options', None)
-        text = getattr(self, step_fn.__name__ + '_message', "...")
-        self.message_sender.send_message_for_context(context, text, options=options)
+    def execute_turn(self, step: Tuple[int, Callable], context: ConversationContext):
+        handler = step[1]
+        resolve_msg = getattr(self, handler.__name__ + '_message', "...")
+        msg = resolve_msg(context) if callable(resolve_msg) else resolve_msg
+
+        resolve_options = getattr(self, handler.__name__ + '_options', None)
+        options = resolve_options(context) if callable(resolve_options) else resolve_options
+        print("Execute dialgo turn", msg, options, resolve_options(context))
+        self.notify_recipient(context, msg, options)
+
+    def notify_recipient(self, context: ConversationContext, text, options):
+        self.message_sender.send_message_for_context(context, text, reply_markup=options)

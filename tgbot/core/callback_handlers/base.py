@@ -61,18 +61,23 @@ class CallbackResult:
     success: bool
     error: Optional[ErrorResponse]
     result: Optional[OkResponse]
+    """
+    Attributes:
+        next_state (:obj:`int`): if set, then determines next state in conversation handler.
+    """
+    next_state: Optional[int]
 
     @staticmethod
-    def success(text, reply_markup):
+    def success(text, reply_markup, next_state=None):
         ok = OkResponse(text, reply_markup)
-        return CallbackResult(True, error=None, result=ok)
+        return CallbackResult(True, error=None, result=ok, next_state=next_state)
 
     @staticmethod
     def error(cause: BaseException, error_code=400):
         bad = ErrorResponse(cause, error_code)
-        return CallbackResult(False, error=bad, result=None)
+        return CallbackResult(False, error=bad, result=None, next_state=None)
 
-    def __init__(self, success: bool, error: Optional[ErrorResponse] = None, result: Optional[OkResponse] = None):
+    def __init__(self, success: bool, error: Optional[ErrorResponse] = None, result: Optional[OkResponse] = None, next_state: Optional[int] = None):
         if success and error:
             raise IllegalArgumentError("Result is successful, but ErrorResponse is not null")
         if not success and result:
@@ -80,12 +85,14 @@ class CallbackResult:
         self.success = success
         self.error = error
         self.result = result
+        self.next_state = next_state
 
     def to_dict(self) -> JSONDict:
         return {
             'success': self.success,
             'error': self.error.to_dict() if self.error else None,
-            'result': self.result.to_dict() if self.result else None
+            'result': self.result.to_dict() if self.result else None,
+            'next_state': self.next_state
         }
 
     def is_ok(self) -> bool:

@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from telegram import Update, Bot, CallbackQuery
 from telegram.ext import CallbackContext
 from telegram.message import Message
 
+from happyrabbit.abc.errors import IllegalStateError
 from happyrabbit.abc.external_account import ExternalSession, ExternalAccount
 from tgbot.service.external_account import TelegramUserService
 
@@ -68,3 +69,8 @@ class ConversationContext:
     def drop_callback_data(self):
         if self.callback_query is not None:
             self.callback_context.drop_callback_data(self.callback_query)
+
+    def update_user_data(self, key: str, value: Any):
+        if self.callback_context.user_data is None:
+            raise IllegalStateError("Cannot store user specific data as command handler is not configured.")
+        self.callback_context.user_data[key] = value

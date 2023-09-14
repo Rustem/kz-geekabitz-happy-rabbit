@@ -1,12 +1,12 @@
 import logging
 import os.path
 from abc import ABC, abstractmethod
-from typing import Dict, Type, Callable
+from typing import Dict, Type, Callable, List
 
 from telegram import Bot, Update
 from telegram.bot import RT
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PicklePersistence, \
-    CallbackQueryHandler, InvalidCallbackData
+    CallbackQueryHandler, InvalidCallbackData, ConversationHandler
 from telegram.ext.callbackcontext import CC, CallbackContext
 from telegram.ext.utils.types import CCT
 from tgbot.core.callback_handlers import TgInlineCallbackHandler
@@ -82,6 +82,13 @@ class BaseBot(ABC):
             # command with such name does not exist
             self.command_not_found(context)
 
+        logger.warning("Unrecognized text from user: [%s]", context.text)
+
+    def start_dialog(self, context: ConversationContext, dialog: Dialog):
+        # TODO log
+        self.dialogs[context.chat_id] = dialog
+        dialog.execute_current_turn(context)
+
     def handle_invalid_button(self, update: Update, context: CallbackContext) -> None:
         """Informs the user that the button is no longer available."""
         update.callback_query.answer()
@@ -109,8 +116,14 @@ class BaseBot(ABC):
         self.dispatcher.add_handler(
             CallbackQueryHandler(self.handle_invalid_button, pattern=InvalidCallbackData)
         )
+        for conv_handler in self.add_conversation_handlers():
+            self.dispatcher.add_handler(conv_handler)
         self.updater.start_polling()
         self.updater.idle()
+
+    @abstractmethod
+    def add_conversation_handlers(self) -> List[ConversationHandler]:
+        raise NotImplementedError("not implemented")
 
     @abstractmethod
     def callback_query_handler(self, context: ConversationContext):
