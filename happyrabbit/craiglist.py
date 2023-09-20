@@ -8,6 +8,7 @@ from pprint import pprint
 from time import sleep
 from typing import Optional, List, Set
 
+import boto3
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -20,6 +21,16 @@ from fake_useragent import UserAgent
 
 import csv
 
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, set):
+        return list(obj)
+    raise TypeError ("Type %s not serializable" % type(obj))
 
 @dataclass
 class CraigslistRecord:
@@ -89,40 +100,40 @@ class CsvWriter:
         self.file.close()
 
 
-class ListingCsvWriter:
+from abc import ABC, abstractmethod
 
-    def __init__(self, file_path="/Users/rustem/Downloads/craigslist_listings.csv"):
-        # Get field names for both classes
-        fieldnames = self.get_field_names()
 
-        self.file_path = file_path
-        file_exists = os.path.exists(self.file_path)
-        self.file = open(self.file_path, 'a', newline='')
-        self.writer = csv.DictWriter(self.file, fieldnames=fieldnames)
-        # Write the header row by getting field names from CraigslistRecord dataclass
-        # Do it only for the first time
-        if not file_exists:
-            self.writer.writeheader()
+class ListingWriter(ABC):
 
-    def get_field_names(self):
-        listing_fields = self._get_fieldnames(Listing)
-        address_component_fields = self._get_fieldnames(AddressComponents)
+    @property
+    @abstractmethod
+    def output_endpoint(self):
+        pass
+
+    @staticmethod
+    def get_field_names():
+        listing_fields = ListingWriter._get_fieldnames(Listing)
+        address_component_fields = ListingWriter._get_fieldnames(AddressComponents)
         # Create a combined list of field names, prefixing address component fields with 'address_'
         # and removing the 'address' field from listing_fields
         fieldnames = [field for field in listing_fields if field != 'address'] + \
                      ['address_' + field for field in address_component_fields]
         return fieldnames
 
-    def listing_to_dict(self, listing):
+    @staticmethod
+    def _get_fieldnames(cls):
+        return [field.name for field in fields(cls)]
+
+    @staticmethod
+    def listing_to_dict(listing):
         result = {}
 
         # Convert AddressComponents to dictionary
         if listing.address:
-            address_dict = asdict(listing.address)
-            result.update({f'address_{key}': value for key, value in address_dict.items()})
+            result['address'] = asdict(listing.address)
 
         # Convert attrs set to comma-separated string
-        result['attrs'] = ", ".join(listing.attrs) if listing.attrs else None
+        result['attrs'] = listing.attrs if listing.attrs else set()
 
         # Convert enums to string values
         result['housingType'] = listing.housingType.name if listing.housingType else None
@@ -139,23 +150,83 @@ class ListingCsvWriter:
         result['totalSquareFootage'] = listing.totalSquareFootage
         result['numberOfParkingStalls'] = listing.numberOfParkingStalls
         result['advertisedRentPrice'] = listing.advertisedRentPrice
-        result['advertisedRentPriceHistory'] = ', '.join(map(str, listing.advertisedRentPriceHistory))
+        result['advertisedRentPriceHistory'] = listing.advertisedRentPriceHistory
         result['rentalStartDate'] = listing.rentalStartDate
-        result['gallery'] = ', '.join(listing.gallery)
+        result['gallery'] = listing.gallery
 
         return result
 
-    def _get_fieldnames(self, cls):
-        return [field.name for field in fields(cls)]
+    @abstractmethod
+    def write_record(self, listing):
+        pass
+
+
+class ListingCsvWriter(ListingWriter):
+
+    def __init__(self, file_path="/Users/rustem/Downloads/craigslist_listings.csv"):
+        # Get field names for both classes
+        fieldnames = self.get_field_names()
+
+        self.file_path = file_path
+        file_exists = os.path.exists(self.file_path)
+        self.file = open(self.file_path, 'a', newline='')
+        self.writer = csv.DictWriter(self.file, fieldnames=fieldnames)
+        # Write the header row by getting field names from CraigslistRecord dataclass
+        # Do it only for the first time
+        if not file_exists:
+            self.writer.writeheader()
+
+    @property
+    def output_endpoint(self):
+        return self.file_path
 
     def write_record(self, listing: Listing):
-        self.writer.writerow(self.listing_to_dict(listing))
+        listing_dict = self.listing_to_dict(listing)
+        # Convert AddressComponents to dictionary
+        if listing.address:
+            address_dict = asdict(listing.address)
+            listing_dict.pop("address")
+            listing_dict.update({f'address_{key}': value for key, value in address_dict.items()})
+
+        # Convert attrs set to comma-separated string
+        listing_dict['attrs'] = ", ".join(listing.attrs) if listing.attrs else None
+        # Convert advertisedRentPriceHistory set to comma-separated string
+        listing_dict['advertisedRentPriceHistory'] = ', '.join(map(str, listing.advertisedRentPriceHistory))
+        # Convert images set to comma-separated string
+        listing_dict['gallery'] = ', '.join(listing.gallery)
+        self.writer.writerow(listing_dict)
 
     def __enter__(self):
+        if self.file.closed:
+            self.file = open(self.file_path, 'a', newline='')
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.file.close()
+
+
+class ListingSqsWriter(ListingWriter):
+
+    def __init__(self, queue_url):
+        self.sqs = boto3.client('sqs')
+        self.queue_url = queue_url
+
+    @property
+    def output_endpoint(self):
+        return self.queue_url
+
+    def write_record(self, listing):
+        listing_dict = self.listing_to_dict(listing)
+        json_message = json.dumps(listing_dict, default=json_serial)
+
+        response = self.sqs.send_message(
+            QueueUrl=self.queue_url,
+            MessageBody=json_message
+        )
+        print("Writing to SQS:", response)
+
+        return response
 
 
 class CraigslistScraper:
@@ -227,10 +298,9 @@ class CraigslistScraper:
         print("Closing the driver and shut down the browser")
         self.driver.quit()
 
-    def scrape_listings(self, max_items=20, page_size=100):
+    def scrape_listings(self, listing_writer: ListingWriter, max_items=20, page_size=100):
         scraped = []
         print(f"Extracting listing details")
-        current_date = datetime.now().strftime('%Y_%m_%d')
 
         with open(f"/Users/rustem/Downloads/craigslist_titles.csv", 'r') as file:
             reader = csv.reader(file)
@@ -249,13 +319,13 @@ class CraigslistScraper:
 
                 if len(scraped) % page_size == 0:
                     # store listing in another csv
-                    file_path = f"/Users/rustem/Downloads/craigslist_listings_{current_date}.csv"
-                    with ListingCsvWriter(file_path=file_path) as writer:
-                        print(f"Storing {len(scraped)} listings in csv file: {writer.file_path}: \n\n")
-                        for listing in scraped:
-                            writer.write_record(listing)
+                    print(f"Storing {len(scraped)} listings at: {listing_writer.output_endpoint}: \n\n")
+                    for listing in scraped:
+                        listing_writer.write_record(listing)
+                    # cleanup state
                     del scraped
                     scraped = []
+                    # reopen browser with new session
                     self.driver.quit()
                     self.driver = self.setup_driver()
 
@@ -333,7 +403,7 @@ class CraigslistScraper:
         json_address = json_data.get("address", {})
         return AddressComponents(
             street=json_address.get("streetAddress"),
-            district=json_address.get("streetAddress"),
+            district=None,
             city=json_address.get("addressLocality"),
             province=json_address.get("addressRegion"),
             country=json_address.get("addressCountry"),
@@ -410,10 +480,19 @@ class CraigslistScraper:
 
 # Usage
 
+
 if __name__ == "__main__":
     path_to_webdriver = "/Users/rustem/code/drivers/chromedriver"
     scraper = CraigslistScraper(path_to_webdriver)
-    scraper.scrape_listings(max_items=0, page_size=20)
+
+    sqs_writer = ListingSqsWriter(queue_url='https://sqs.us-west-2.amazonaws.com/850468561006/radar-rent-listings-queue')
+    scraper.scrape_listings(sqs_writer, max_items=100, page_size=2)
+
+    # UNCOMMENT BELOW FOR LISTING WITH CSV WRITER
+    # current_date = datetime.now().strftime('%Y_%m_%d')
+    # file_path = f"/Users/rustem/Downloads/craigslist_listings_{current_date}.csv"
+    # with ListingCsvWriter(file_path=file_path) as writer:
+    #     scraper.scrape_listings(writer, max_items=10, page_size=1) # tune params
     # scraper.scrape_craigslist_titles(max_pages=20)
     # scraper.dump_titles()
 
