@@ -28,6 +28,8 @@ def json_serial(obj):
 
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
+    if isinstance(obj, set):
+        return list(obj)
     raise TypeError ("Type %s not serializable" % type(obj))
 
 @dataclass
@@ -128,11 +130,10 @@ class ListingWriter(ABC):
 
         # Convert AddressComponents to dictionary
         if listing.address:
-            address_dict = asdict(listing.address)
-            result.update({f'address_{key}': value for key, value in address_dict.items()})
+            result['address'] = asdict(listing.address)
 
         # Convert attrs set to comma-separated string
-        result['attrs'] = ", ".join(listing.attrs) if listing.attrs else None
+        result['attrs'] = listing.attrs if listing.attrs else set()
 
         # Convert enums to string values
         result['housingType'] = listing.housingType.name if listing.housingType else None
@@ -149,9 +150,9 @@ class ListingWriter(ABC):
         result['totalSquareFootage'] = listing.totalSquareFootage
         result['numberOfParkingStalls'] = listing.numberOfParkingStalls
         result['advertisedRentPrice'] = listing.advertisedRentPrice
-        result['advertisedRentPriceHistory'] = ', '.join(map(str, listing.advertisedRentPriceHistory))
+        result['advertisedRentPriceHistory'] = listing.advertisedRentPriceHistory
         result['rentalStartDate'] = listing.rentalStartDate
-        result['gallery'] = ', '.join(listing.gallery)
+        result['gallery'] = listing.gallery
 
         return result
 
@@ -180,7 +181,20 @@ class ListingCsvWriter(ListingWriter):
         return self.file_path
 
     def write_record(self, listing: Listing):
-        self.writer.writerow(self.listing_to_dict(listing))
+        listing_dict = self.listing_to_dict(listing)
+        # Convert AddressComponents to dictionary
+        if listing.address:
+            address_dict = asdict(listing.address)
+            listing_dict.pop("address")
+            listing_dict.update({f'address_{key}': value for key, value in address_dict.items()})
+
+        # Convert attrs set to comma-separated string
+        listing_dict['attrs'] = ", ".join(listing.attrs) if listing.attrs else None
+        # Convert advertisedRentPriceHistory set to comma-separated string
+        listing_dict['advertisedRentPriceHistory'] = ', '.join(map(str, listing.advertisedRentPriceHistory))
+        # Convert images set to comma-separated string
+        listing_dict['gallery'] = ', '.join(listing.gallery)
+        self.writer.writerow(listing_dict)
 
     def __enter__(self):
         if self.file.closed:
@@ -389,7 +403,7 @@ class CraigslistScraper:
         json_address = json_data.get("address", {})
         return AddressComponents(
             street=json_address.get("streetAddress"),
-            district=json_address.get("streetAddress"),
+            district=None,
             city=json_address.get("addressLocality"),
             province=json_address.get("addressRegion"),
             country=json_address.get("addressCountry"),
@@ -478,7 +492,7 @@ if __name__ == "__main__":
     # current_date = datetime.now().strftime('%Y_%m_%d')
     # file_path = f"/Users/rustem/Downloads/craigslist_listings_{current_date}.csv"
     # with ListingCsvWriter(file_path=file_path) as writer:
-    #     scraper.scrape_listings(writer, max_items=3, page_size=2)
+    #     scraper.scrape_listings(writer, max_items=10, page_size=1) # tune params
     # scraper.scrape_craigslist_titles(max_pages=20)
     # scraper.dump_titles()
 
